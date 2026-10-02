@@ -9,6 +9,7 @@ clear
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
+RED='\033[0;31m'
 YELLOW='\033[1;33m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
@@ -37,10 +38,26 @@ echo -e "${CYAN}Initializing workshop environment...${NC}\n"
 # Spinner animation while background.sh finishes provisioning
 spin='-\|/'
 i=0
+TIMEOUT=180
+ELAPSED=0
+
 while [ ! -f /tmp/killercoda_ready ]; do
+    if [ -f /tmp/killercoda_failed ]; then
+        printf "\r${RED}[✘] Initialization failed!                                                       ${NC}\n\n"
+        echo -e "${BOLD}${RED}Initialization failed. Run 'cat /var/log/killercoda_background.log' to inspect the error.${NC}\n"
+        exit 1
+    fi
+
+    if [ ${ELAPSED} -ge ${TIMEOUT} ]; then
+        printf "\r${RED}[✘] Initialization timed out after ${TIMEOUT} seconds!                           ${NC}\n\n"
+        echo -e "${BOLD}${RED}Initialization failed. Run 'cat /var/log/killercoda_background.log' to inspect the error.${NC}\n"
+        exit 1
+    fi
+
     i=$(( (i+1) % 4 ))
     printf "\r${YELLOW}[%c] Setting up container environment, packages, and forensic artifacts...${NC}" "${spin:$i:1}"
     sleep 0.4
+    ELAPSED=$((ELAPSED + 1))
 done
 
 printf "\r${GREEN}[✔] Provisioning complete! All systems operational.                                     ${NC}\n\n"

@@ -33,31 +33,103 @@
     ],
     "finish": {
       "text": "finish.md"
-    },
-    "assets": {
-      "host01": [
-        {
-          "file": "assets/docker-compose.yml",
-          "target": "/assets/",
-          "chmod": "+rw"
-        },
-        {
-          "file": "assets/victim/Dockerfile",
-          "target": "/assets/victim/",
-          "chmod": "+r"
-        },
-        {
-          "file": "assets/victim/pipeline_runner.sh",
-          "target": "/assets/victim/",
-          "chmod": "+x"
-        },
-        {
-          "file": "assets/evidence/backdoor_implant.sh",
-          "target": "/evidence/",
-          "chmod": "+x"
-        }
-      ]
     }
+  },
+  "assets": {
+    "host01": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      }
+    ],
+    "host0": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      }
+    ]
   },
   "backend": {
     "imageid": "ubuntu"
