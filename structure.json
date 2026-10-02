@@ -1,0 +1,14 @@
+{
+    "title": "CPIFP Alan Turing Workshops",
+    "categories": [
+        {
+            "title": "DevSecOps & DFIR",
+            "scenarios": [
+                {
+                    "id": "devsecops-dfir-lab",
+                    "path": "."
+                }
+            ]
+        }
+    ]
+}
