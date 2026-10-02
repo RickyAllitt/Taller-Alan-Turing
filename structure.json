@@ -6,7 +6,7 @@
             "scenarios": [
                 {
                     "id": "devsecops-dfir-lab",
-                    "path": "."
+                    "path": "devsecops-dfir"
                 }
             ]
         }
