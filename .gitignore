@@ -1,6 +1,5 @@
 # Ignore markdown documentation files
-*.md
-!README.md
+CONTEXT.md
 
 # OS & Editor artifacts
 .DS_Store
