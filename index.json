@@ -1,0 +1,68 @@
+{
+  "title": "DevSecOps & Container DFIR: Supply Chain Attacks, Breakouts & Hardening",
+  "description": "Interactive scenario exploring CI/CD pipeline poisoning, process memory secret harvesting, Docker socket container escapes, OverlayFS YARA triage, and CIS Docker Benchmark hardening.",
+  "difficulty": "Intermediate",
+  "time": "75 minutes",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "background.sh",
+      "foreground": "foreground.sh"
+    },
+    "steps": [
+      {
+        "title": "Challenge 1: Poisoned Pipeline Execution & Secret Harvesting",
+        "text": "step1.md",
+        "verify": "step1/verify.sh"
+      },
+      {
+        "title": "Challenge 2: Container Breakout via Docker Socket",
+        "text": "step2.md",
+        "verify": "step2/verify.sh"
+      },
+      {
+        "title": "Challenge 3: DFIR Triage & YARA Threat Hunting",
+        "text": "step3.md",
+        "verify": "step3/verify.sh"
+      },
+      {
+        "title": "Challenge 4: Production Hardening (DevSecOps)",
+        "text": "step4.md",
+        "verify": "step4/verify.sh"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    },
+    "assets": {
+      "host01": [
+        {
+          "file": "assets/docker-compose.yml",
+          "target": "/assets/",
+          "chmod": "+rw"
+        },
+        {
+          "file": "assets/victim/Dockerfile",
+          "target": "/assets/victim/",
+          "chmod": "+r"
+        },
+        {
+          "file": "assets/victim/pipeline_runner.sh",
+          "target": "/assets/victim/",
+          "chmod": "+x"
+        },
+        {
+          "file": "assets/evidence/backdoor_implant.sh",
+          "target": "/evidence/",
+          "chmod": "+x"
+        }
+      ]
+    }
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  },
+  "interface": {
+    "layout": "split"
+  }
+}

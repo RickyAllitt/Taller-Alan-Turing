@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  cicd_runner_pipeline:
+    container_name: cicd_runner_pipeline
+    image: alan-turing/cicd-runner:vulnerable
+    build:
+      context: ./victim
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - RUNNER_NAME=worker-01
+      - RUNNER_ORGANIZATION=AlanTuring-SecOps
+      - CI_ENVIRONMENT=production
+    volumes:
+      # CRITICAL SECURITY FLAW: Mounting Docker socket gives container root-equivalent control over host
+      - /var/run/docker.sock:/var/run/docker.sock

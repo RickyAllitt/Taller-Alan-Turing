@@ -1,0 +1,16 @@
+# Ignore markdown documentation files
+*.md
+!README.md
+
+# OS & Editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Temporary workshop & verification logs
+/tmp/flag*.txt
+/tmp/killercoda_ready
+*.log
