@@ -1,94 +1,63 @@
-# DevSecOps & Container DFIR: Supply Chain Attacks, Breakouts & Hardening
+# Operational Engagement Briefing: Cloud-Native DFIR and Workload Hardening
 
-Welcome to the **DevSecOps & Container DFIR Hands-on Workshop** designed for the **Curso de Especialización en Ciberseguridad** at **CPIFP Alan Turing (Málaga)**.
+## Technical Incident Overview
 
----
+At 03:42 UTC, runtime telemetry from host infrastructure flagged anomalous process spawning and unauthorized IPC requests on continuous integration worker `cicd_runner_pipeline`. Initial telemetry indicates that an untrusted CI/CD workflow executed arbitrary logic within the containerized build worker, initiating lateral enumeration against the host kernel.
 
-## 🎯 Incident Briefing & Scenario Narrative
-
-You are deployed as a **Principal DevSecOps & Incident Response Specialist** at *Alan Turing Cloud Systems*. 
-
-At **03:42 UTC**, automated runtime telemetry detected anomalous execution within one of your organization's core continuous integration nodes: a Dockerized build agent named `cicd_runner_pipeline`. Threat intelligence suggests an adversary gained remote execution through a **Poisoned Pipeline Execution (PPE)** vector, attempting to:
-
-1. **Harvest high-value production credentials** injected into the pipeline runner's memory space.
-2. **Break out of the container environment** by exploiting an unsegmented Docker Unix socket (`/var/run/docker.sock`) to compromise the underlying Linux host.
-3. **Establish persistence & exfiltrate intellectual property** using an automated curl-based implant.
-4. Evade traditional detection by taking advantage of missing container boundaries and root privileges.
-
-Your mission is divided into two operational phases:
-- **Phase 1: Offensive Reconstruction & DFIR Triage (Challenges 1 - 3)**: Reconstruct the attacker's path, extract leaked secrets from `/proc/1/environ`, perform a host escape, and develop a YARA detection rule against the adversary's implant.
-- **Phase 2: Defensive Engineering & Hardening (Challenge 4)**: Remediate the vulnerable deployment using DevSecOps best practices, adhering to the **CIS Docker Benchmark** and the principle of least privilege.
-
----
-
-## 🏛️ Lab Architecture
+This operational engagement requires you to perform offensive reconstruction, digital forensic triage, and baseline security re-engineering.
 
 ```text
 +-----------------------------------------------------------------------------------+
-| Linux Host VM (Ubuntu 22.04 LTS / Host Environment)                               |
+| Host System (Ubuntu 22.04 LTS / Host Environment)                                 |
 |                                                                                   |
-|  [Filesystem]                                                                     |
-|    ├── /root/host_flag.txt               <-- Host Target Flag (Ch. 2)             |
-|    ├── /evidence/backdoor_implant.sh     <-- Malicious Implant Sample (Ch. 3)     |
-|    └── /assets/docker-compose.yml        <-- Vulnerable Service Definition (Ch. 4)|
+|  Filesystem Artifacts                                                             |
+|    /root/host_flag.txt               Host root integrity target (Challenge 2)    |
+|    /evidence/backdoor_implant.sh     Recovered malicious artifact (Challenge 3)   |
+|    /assets/docker-compose.yml        Vulnerable workload manifest (Challenge 4)   |
 |                                                                                   |
-|  [Docker Engine Daemon: dockerd]                                                  |
-|    └── UNIX Socket: /var/run/docker.sock <═════════════════════════════════╗       |
-|                                                                            ║       |
-|  +----------------------------------------------------------------------+  ║ Mount |
-|  | Container: cicd_runner_pipeline                                      |  ║       |
-|  |                                                                      |  ║       |
-|  |  [Mounted Socket] /var/run/docker.sock <═════════════════════════════╝       |
-|  |                                                                                |
-|  |  [Processes]                                                                   |
-|  |    ├── PID 1: /app/pipeline_runner.sh                                         |
-|  |    │     └── Process Memory: /proc/1/environ                                  |
-|  |    │           └── Secret: DEPLOY_PRODUCTION_KEY=FLAG{...} (Ch. 1)            |
-|  |    │                                                                           |
-|  |    └── Subshell / Exec Sessions (Isolated from default env)                    |
-|  |                                                                                |
-|  |  [Filesystem Layers - OverlayFS]                                               |
-|  |    ├── UpperDir / /var/log/pipeline_audit/backdoor_implant.sh                  |
-|  |    └── LowerDir (Base Alpine Image + docker-cli)                               |
-|  +----------------------------------------------------------------------+         |
+|  Docker Engine Daemon (dockerd)                                                   |
+|    UNIX Domain Socket: /var/run/docker.sock <═════════════════════════════╗       |
+|                                                                           ║ Mount |
+|  Container Boundary: cicd_runner_pipeline                                 ║       |
+|                                                                           ║       |
+|    Mounted Socket: /var/run/docker.sock <═════════════════════════════════╝       |
+|                                                                                   |
+|    Process Hierarchy                                                              |
+|      PID 1: /app/pipeline_runner.sh                                               |
+|        └── Virtual Memory: /proc/1/environ (Challenge 1)                          |
+|                                                                                   |
+|    OverlayFS Storage Layout                                                       |
+|      UpperDir: Dynamic copy-on-write mutable layer (Challenge 3)                  |
+|      LowerDir: Base image immutable layers                                        |
 +-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 📋 Mission Roadmap
+## Scope of Work and Rules of Engagement
 
-| Challenge | Phase | MITRE ATT&CK / NIST | Objective |
-| :--- | :--- | :--- | :--- |
-| **Challenge 1** | Threat Simulation | [T1552.003](https://attack.mitre.org/techniques/T1552/003/) (Process Environment) | Inspect `/proc/1/environ` to extract leaked pipeline credentials. |
-| **Challenge 2** | Container Breakout | [T1611](https://attack.mitre.org/techniques/T1611/) (Escape to Host) | Abuse `/var/run/docker.sock` to escape the container and capture host root. |
-| **Challenge 3** | DFIR & Threat Hunting | [T1059.004](https://attack.mitre.org/techniques/T1059/004/) (Unix Shell) | Analyze the malicious implant and write a production-grade YARA rule. |
-| **Challenge 4** | DevSecOps Hardening | CIS Docker Benchmark | Re-engineer `docker-compose.yml` to enforce immutability and drop capabilities. |
+The assessment is partitioned into two functional disciplines:
+
+### Phase 1: Attack Reconstruction and DFIR Triage (Challenges 1 to 3)
+1. **In-Memory Credential Harvesting**: Interrogate kernel-exposed process telemetry to recover sensitive production credentials leaking through the process hierarchy.
+2. **UNIX Socket Exploitation**: Exploit host daemon socket exposure to achieve a full container breakout and acquire host root access.
+3. **Forensic Delta Analysis and Threat Hunting**: Identify filesystem modifications within the container storage driver layers and author an enterprise detection rule using YARA.
+
+### Phase 2: Defensive Remediation and Hardening (Challenge 4)
+1. **Container Security Architecture**: Re-engineer the service deployment manifest to enforce immutable root filesystems, Linux capability restriction, non-root user execution, and socket de-provisioning according to CIS Docker Benchmark standards.
 
 ---
 
-## ⚡ Pre-Flight Environment Checks
+## Technical Constraints and Operational Boundaries
 
-The background provisioning script automatically initializes Docker, builds the required images, and installs forensic tooling (`yara`, `jq`).
+- Automated verification scripts are bound to each phase. Output values must strictly adhere to the expected format and target filesystem locations specified in each section.
+- Modifying underlying system services or uninstalling monitoring components will cause verification failure.
+- Ensure all intermediate analysis scripts are stored in `/tmp` or `/evidence`.
 
-Before starting Challenge 1, verify that all prerequisites are ready on the host:
-
-```bash
-docker ps
-```
-
-You should see `cicd_runner_pipeline` in an `Up` status.
-
-Check that YARA is available:
+Confirm baseline node readiness before proceeding:
 
 ```bash
-yara --version
+docker ps --filter "name=cicd_runner_pipeline" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 ```
 
-Verify that the lab assets and evidence folders are present:
-
-```bash
-ls -ld /assets /evidence
-```
-
-Click **Next** in the bottom right corner to begin **Challenge 1**.
+Advance to **Challenge 1** to begin credential reconstruction.

@@ -1,106 +1,53 @@
-# Challenge 1: Poisoned Pipeline Execution & Secret Harvesting
+# Challenge 1: Poisoned Pipeline Execution & Process Memory Harvesting
 
-## 📖 Background & Threat Landscape
+## Threat Modeling: In-Memory Credential Exposure
 
-In modern cloud-native environments, **Continuous Integration and Continuous Deployment (CI/CD)** pipelines are high-value targets. Under the **Poisoned Pipeline Execution (PPE)** attack pattern (MITRE ATT&CK [T1195.002](https://attack.mitre.org/techniques/T1195/002/)), an attacker submits a malicious Pull Request or alters build scripts (`.gitlab-ci.yml`, `Jenkinsfile`, GitHub Actions workflow) to execute arbitrary commands within the build runner.
+Under the Poisoned Pipeline Execution (PPE) taxonomy (MITRE ATT&CK [T1195.002](https://attack.mitre.org/techniques/T1195/002/)), untrusted code execution within a continuous integration build runner allows adversaries to inspect the container environment. A widespread architectural deficiency in CI/CD pipeline agents involves injecting high-privilege secrets directly into the initial executor process or container entrypoint.
 
-A common architectural anti-pattern occurs when orchestrators pass deployment credentials or cloud API keys to the primary runner daemon (PID 1). Developers often assume that running build tasks in subshells or child processes shields these secrets if they are not explicitly exported to child environments. However, under standard Linux container defaults:
-- All processes inside the container share the same **PID namespace**.
-- The virtual filesystem `/proc` exposes raw process memory and state.
-- The pseudo-file `/proc/[PID]/environ` contains the initial environment variables of the target process, separated by null bytes (`\0`).
-
-In this challenge, your objective is to simulate an adversary with code execution inside the build agent container, harvest the production deployment key from PID 1, and save it for verification.
+When an unprivileged build job or subshell executes within the same container namespace:
+- Child sessions spawned via secondary execution channels (such as supplementary shells or task runners) do not necessarily inherit variables that were unexported or cleared by child wrappers.
+- However, Linux process isolation boundaries inside a container depend entirely on namespaces. When containers run without internal PID namespace virtualization, all processes share a common `/proc` view.
+- Under the Linux pseudo-filesystem `/proc`, the virtual file `/proc/[PID]/environ` exposes the initial environment block passed to `execve(2)` when that process was created.
 
 ---
 
-## 🛠️ Step-by-Step Instructions
+## Technical Objectives
 
-### 1. Access the Vulnerable CI/CD Runner Container
-
-From the host terminal, obtain an interactive shell session inside the target container:
-
-```bash
-docker exec -it cicd_runner_pipeline sh
-```
-
-You are now operating inside the build worker container as root.
-
-### 2. Verify Subshell Environment Variable Masking
-
-Run standard environment listing utilities to observe what is visible in the current session:
-
-```bash
-env
-```
-
-Notice that standard variables such as `PATH` and `HOSTNAME` are listed, but **no production deployment keys** appear in your current shell environment.
-
-### 3. Inspect the Process Table
-
-Identify the processes executing inside this container:
-
-```bash
-ps aux
-```
-
-You will observe:
-- **PID 1**: `/app/pipeline_runner.sh` (the parent pipeline daemon)
-- **Child PIDs**: Your interactive shell (`sh`) and `ps`.
-
-### 4. Extract Process Memory from `/proc/1/environ`
-
-Because Linux exposes the initial execution environment of PID 1 in `/proc/1/environ`, you can read this virtual file. Since the fields are separated by null bytes (`\0`), use `tr` or `strings` to format the output into readable lines:
-
-Using `tr`:
-```bash
-tr '\0' '\n' < /proc/1/environ
-```
-
-Or using `strings` and filtering for the flag:
-```bash
-strings /proc/1/environ | grep FLAG
-```
-
-Examine the output. You will discover the production deployment secret:
-`DEPLOY_PRODUCTION_KEY=FLAG{supply_chain_credential_leaked_proc_2026}`
-
-### 5. Exit the Container and Store the Flag
-
-Exit the container session to return to the host VM prompt:
-
-```bash
-exit
-```
-
-Now, write the captured flag into `/tmp/flag1.txt` on the host:
-
-```bash
-echo "FLAG{supply_chain_credential_leaked_proc_2026}" > /tmp/flag1.txt
-```
-
-Verify that the file contains the flag:
-
-```bash
-cat /tmp/flag1.txt
-```
+1. Access the target workload container named `cicd_runner_pipeline`.
+2. Inspect the process hierarchy and determine the process identifier (PID) of the primary worker daemon.
+3. Interrogate the process memory structures exposed by the Linux kernel under `/proc` to identify leaked production credentials.
+4. Extract the value associated with the variable `DEPLOY_PRODUCTION_KEY`.
+5. Persist the recovered secret into `/tmp/flag1.txt` on the host filesystem.
 
 ---
 
-## 🔍 DevSecOps Key Takeaway
+## Investigation Vectors and Execution Guidelines
 
-> **Why did this happen?**
-> Standard Docker containers run with a shared PID namespace. Any process with sufficient privileges (or running as the same UID as PID 1) can read `/proc/1/environ`.
->
-> **Production Remediation:**
-> - Never inject long-lived static secrets into container process environments.
-> - Utilize dynamic, ephemeral credentials via **OIDC (OpenID Connect)** or secret stores with short TTLs (e.g., HashiCorp Vault, AWS Secrets Manager).
-> - Enable **User Namespaces** (`userns-remap`) and isolate build jobs in separate microVMs or ephemeral containers (e.g., using Kubernetes Pods per build).
+### Process Tree Enumeration
+Spawn an interactive shell within the target runner container using `docker exec`. Once inside, evaluate the active process table using standard POSIX process enumeration utilities (such as `ps`). Note the distinction between short-lived worker commands and long-running daemons executing at the root of the container namespace (PID 1).
+
+### Memory Block Parsing
+Examine the process environment table corresponding to the initial daemon process.
+
+In the Linux kernel, `/proc/[PID]/environ` represents an array of null-byte (`0x00` / ASCII `\0`) delimited key-value strings (`KEY=VALUE\0KEY2=VALUE2...`). Because standard shell utilities treat null bytes as string terminators or non-printable delimiters, executing standard line-oriented commands like `grep` directly against raw pseudo-files will often fail to produce parsed records or will return the entire stream as a single binary blob.
+
+Determine which native text-processing tools (such as `tr(1)`, `strings(1)`, `awk(1)`, or `sed(1)`) allow you to translate null-byte delimiters into standard newline characters (`\n`), enabling precise regular expression filtering.
+
+### Key Recovery
+Filter the parsed output for variables prefixed with `DEPLOY_` or containing standard flag encodings (`FLAG{...}`).
 
 ---
 
-## ✅ Verification
+## Verification Requirements
 
-Click the **Check** button below or run the verification script directly from your terminal:
+Return to the host environment and write the isolated flag string into `/tmp/flag1.txt`:
+
+```text
+Target File: /tmp/flag1.txt
+Expected Format: FLAG{...}
+```
+
+Once written, execute the verification check using the Killercoda interface or by invoking:
 
 ```bash
 /step1/verify.sh

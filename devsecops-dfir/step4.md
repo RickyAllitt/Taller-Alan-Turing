@@ -1,153 +1,100 @@
-# Challenge 4: Production Hardening (DevSecOps)
+# Challenge 4: Production Hardening & Baseline Verification
 
-## 📖 Background & Security Principles
+## Engineering Security Controls: CIS Docker Benchmark Compliance
 
-In the previous challenges, you exploited common misconfigurations:
-1. Process environment credential exposure ([T1552.003](https://attack.mitre.org/techniques/T1552/003/))
-2. Unrestricted Docker daemon socket access allowing host takeover ([T1611](https://attack.mitre.org/techniques/T1611/))
-3. Writable container root filesystems allowing attackers to drop and execute implants ([T1059.004](https://attack.mitre.org/techniques/T1059/004/))
+In the preceding challenges, you demonstrated that default container runtime configurations permit three critical vulnerability classes:
+1. **Unrestricted IPC Exposure**: Direct access to the host daemon socket permits container breakout and root host compromise.
+2. **Volatile File Permissiveness**: Writable root filesystems permit adversaries to stage backdoors, download payloads, and modify runtime libraries.
+3. **Privilege Over-Allocation**: Executing workloads with default capability sets and root UID facilitates privilege escalation and kernel interaction.
 
-As a DevSecOps engineer, your goal is to enforce **Defense-in-Depth** and **Least Privilege**. In this final challenge, you will refactor the deployment configuration to implement the **CIS Docker Benchmark** recommendations.
-
----
-
-## 🛡️ Hardening Controls Overview
-
-| Security Control | Benchmark Directive | Security Benefit |
-| :--- | :--- | :--- |
-| **Eliminate Docker Socket** | CIS Docker 5.31 | Removes the capability to control the host Docker daemon. |
-| **Run as Non-Root User** | CIS Docker 4.1 (`user: "10001:10001"`) | Ensures process does not execute as UID 0, limiting kernel attack surface. |
-| **Read-Only Root Filesystem** | CIS Docker 5.12 (`read_only: true`) | Prevents adversaries or malware from modifying binaries or dropping scripts. |
-| **Drop All Capabilities** | CIS Docker 5.2 (`cap_drop: ["ALL"]`) | Removes default Linux capabilities (`CAP_NET_RAW`, `CAP_CHOWN`, etc.). |
-| **Prevent Privilege Escalation** | CIS Docker 5.25 (`security_opt: ["no-new-privileges:true"]`) | Prevents processes from acquiring additional privileges via `setuid`/`setgid` binaries. |
-| **Ephemeral Memory Storage** | Security Best Practice (`tmpfs: ["/tmp"]`) | Provides volatile in-memory storage for temporary files without weakening rootfs immutability. |
+To remediate these exposures in accordance with **CIS Docker Benchmark** and **NIST SP 800-190** standards, you must refactor the service definition into an immutable, least-privilege deployment manifest.
 
 ---
 
-## 🛠️ Step-by-Step Instructions
+## Technical Objectives
 
-### 1. Review the Vulnerable Configuration
+1. Analyze the existing vulnerable service definition at `/assets/docker-compose.yml`.
+2. Construct a production-grade hardened Compose configuration saved at `/assets/docker-compose.hardened.yml`.
+3. Enforce the required security controls:
+   - Complete removal of the Docker daemon socket mount.
+   - Non-root UID/GID execution context (`10001:10001`).
+   - Kernel-enforced read-only root filesystem (`read_only: true`).
+   - Complete revocation of default Linux capabilities (`cap_drop: [ALL]`).
+   - Prevention of privilege escalation via setuid binaries (`no-new-privileges:true`).
+   - Allocation of an in-memory ephemeral scratch partition (`tmpfs`) at `/tmp`.
+4. Deploy the hardened service using `docker compose` with the `--force-recreate` flag.
+5. Empirically verify that file creation on `/` is blocked by kernel filesystem protection, that the process runs under the non-root identity, and that `/var/run/docker.sock` is absent.
 
-Inspect the existing vulnerable configuration at `/assets/docker-compose.yml`:
+---
 
-```bash
-cat /assets/docker-compose.yml
+## Specification and Architecture Directives
+
+Construct `/assets/docker-compose.hardened.yml` maintaining the service name (`cicd_runner_pipeline`), image (`alan-turing/cicd-runner:vulnerable`), and environment parameters, while enforcing the following control directives:
+
+### 1. IPC and Volume Deprecation (CIS Benchmark 5.31)
+Under `volumes:`, purge the bind-mount entry for `/var/run/docker.sock`. Workload processes must have no communication channel to the host Docker daemon.
+
+### 2. Principle of Least Privilege Execution (CIS Benchmark 4.1)
+The base image contains an unprivileged service account created with UID/GID `10001:10001`. Enforce execution under this account using the Compose `user` directive:
+```yaml
+user: "10001:10001"
 ```
 
-Notice the presence of the Docker socket volume and the absence of capability restrictions and read-only flags.
-
-### 2. Create the Hardened Compose File
-
-Create the new hardened configuration file at `/assets/docker-compose.hardened.yml`:
-
-```bash
-cat << "EOF" > /assets/docker-compose.hardened.yml
-version: '3.8'
-
-services:
-  cicd_runner_pipeline:
-    container_name: cicd_runner_pipeline
-    image: alan-turing/cicd-runner:vulnerable
-    restart: unless-stopped
-    
-    # 1. Run as non-root user (created in Dockerfile as UID 10001)
-    user: "10001:10001"
-    
-    # 2. Immutable root filesystem: prevent any writes to /
-    read_only: true
-    
-    # 3. Prevent privilege escalation via setuid binaries
-    security_opt:
-      - no-new-privileges:true
-      
-    # 4. Drop all default Linux capabilities
-    cap_drop:
-      - ALL
-      
-    # 5. Provide volatile in-memory scratch space for temporary files
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,size=64m
-      
-    environment:
-      - RUNNER_NAME=worker-01
-      - RUNNER_ORGANIZATION=AlanTuring-SecOps
-      - CI_ENVIRONMENT=production
-
-    # NOTE: The /var/run/docker.sock volume has been completely removed!
-EOF
+### 3. Filesystem Immutability (CIS Benchmark 5.12)
+Prevent modifications to application binaries and system libraries by mounting the container's root filesystem in read-only mode:
+```yaml
+read_only: true
 ```
 
-Verify that the file is created:
-
-```bash
-cat /assets/docker-compose.hardened.yml
+### 4. Linux Capability Stripping (CIS Benchmark 5.2)
+By default, Docker allocates 14 Linux capabilities (e.g., `CAP_NET_RAW`, `CAP_CHOWN`, `CAP_MKNOD`) to unprivileged containers. Strip all ambient capabilities:
+```yaml
+cap_drop:
+  - ALL
 ```
 
-### 3. Deploy the Hardened Container Stack
+### 5. Privilege Escalation Prevention (CIS Benchmark 5.25)
+Ensure that child processes cannot acquire additional execution privileges through setuid or setgid binaries:
+```yaml
+security_opt:
+  - no-new-privileges:true
+```
 
-Recreate the container stack using your hardened definition. Use the `--force-recreate` flag to ensure the old container is replaced:
+### 6. Ephemeral Scratch Space
+Because `read_only: true` locks the entire container rootfs, applications requiring temporary workspace buffers must be provided an in-memory mount. Configure a `tmpfs` mount targeting `/tmp`:
+```yaml
+tmpfs:
+  - /tmp:rw,noexec,nosuid,size=64m
+```
+
+---
+
+## Deployment and Empirical Validation
+
+### Service Deployment
+Deploy the refactored workload:
 
 ```bash
 docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate
 ```
 
-Verify that the new container is running:
+Confirm that the new container is in an `Up` operational status.
 
-```bash
-docker ps
-```
+### Empirical Control Testing
+Validate each hardening boundary manually using `docker exec`:
 
-### 4. Verify Hardening Controls Inside the Container
-
-Test the defenses you have established:
-
-#### Test A: Immutability (Read-Only Root Filesystem)
-Attempt to create a file in the root filesystem:
-
-```bash
-docker exec cicd_runner_pipeline touch /malicious_payload
-```
-
-**Expected Result:** `touch: /malicious_payload: Read-only file system`
-
-#### Test B: Non-Root Execution
-Check the current user ID and group ID:
-
-```bash
-docker exec cicd_runner_pipeline id
-```
-
-**Expected Result:** `uid=10001(cicduser) gid=10001(cicdgroup)`
-
-#### Test C: Absence of Docker Socket
-Verify that `/var/run/docker.sock` no longer exists:
-
-```bash
-docker exec cicd_runner_pipeline ls -la /var/run/docker.sock
-```
-
-**Expected Result:** `ls: /var/run/docker.sock: No such file or directory`
-
-#### Test D: Functional Ephemeral Scratch Space
-Verify that temporary operations can still write to `/tmp`:
-
-```bash
-docker exec cicd_runner_pipeline touch /tmp/test_scratch && echo "Scratch space works!"
-```
-
-**Expected Result:** `Scratch space works!`
+1. **Test Rootfs Immutability**: Attempt to create an arbitrary file within root (e.g., `/test_immutability`). The command must fail with `Read-only file system`.
+2. **Test Process Identity**: Query the active user identity (`id`). The output must confirm execution under `uid=10001(cicduser) gid=10001(cicdgroup)`.
+3. **Test Socket Elimination**: Query the path `/var/run/docker.sock`. The shell must return `No such file or directory`.
+4. **Test Scratch Space Functionality**: Attempt file creation within `/tmp`. Writes to `/tmp` must succeed while remaining confined to RAM.
 
 ---
 
-## 🔍 DevSecOps Key Takeaway
+## Verification Requirements
 
-> By combining `read_only: true`, `cap_drop: ["ALL"]`, `no-new-privileges:true`, and non-root execution, you transform a fragile container into a resilient, hardened workload. Even if an adversary achieves arbitrary code execution inside the container, they cannot drop persistent malware, tamper with runtime binaries, or interact with host kernel capabilities.
+Ensure `/assets/docker-compose.hardened.yml` is populated and that the active `cicd_runner_pipeline` container reflects the hardened configuration.
 
----
-
-## ✅ Verification
-
-Click the **Check** button below or run the verification script directly from your terminal:
+Trigger the automated security audit script:
 
 ```bash
 /step4/verify.sh

