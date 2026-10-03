@@ -1,60 +1,70 @@
 # Challenge 2: Docker Daemon Socket Breakout & Host Escape
 
-## Architectural Audit: UNIX Domain Socket Permissions
+**Time Allocation: 15 - 18 minutes**
 
-A frequent configuration anti-pattern in containerized CI/CD build environments is known as **Docker-outside-of-Docker (DooD)**. To allow build steps to assemble and push container images, system administrators frequently mount the host Docker engine's IPC channel into the runner container:
+---
+
+## Architectural Vulnerability: Docker Client-Server Daemon Model
+
+In automated CI/CD environments, pipeline workflows often need to build and publish container images. To avoid running complex nested virtualization, administrators frequently implement **Docker-outside-of-Docker (DooD)** by mounting the host's Docker socket into the runner container:
 
 ```text
-/var/run/docker.sock (Host) -> /var/run/docker.sock (Container)
+Host Architecture                     Container Workload
+┌───────────────────────────────┐     ┌───────────────────────────────┐
+│ dockerd (Host Root: UID 0)    │     │ Container User / Shell        │
+│    │                          │     │    │                          │
+│    └── /var/run/docker.sock ◄─┼─────┼────└── /var/run/docker.sock   │
+└───────────────────────────────┘     └───────────────────────────────┘
 ```
 
-### Privilege Boundary Collapse
+### IPC Privilege Boundary Collapse
 
-The Docker daemon (`dockerd`) executes with host root privileges (`UID 0`). The UNIX domain socket `/var/run/docker.sock` exposes the Docker Engine REST API without granular authorization or role-based access control by default.
-
-When an unprivileged or containerized process is granted write access to this socket:
-1. The process can interact directly with the host daemon via the Docker CLI or raw HTTP requests over the UNIX socket.
-2. The daemon executes API requests within the host kernel context, not within the requesting container's restricted context.
-3. Consequently, write access to `/var/run/docker.sock` is functionally equivalent to unrestricted, passwordless `sudo` on the underlying host system (MITRE ATT&CK [T1611](https://attack.mitre.org/techniques/T1611/)).
+The Docker architecture is decoupled into a client CLI (`docker`) and a background daemon (`dockerd`):
+- Communication occurs via the UNIX domain socket located at `/var/run/docker.sock`.
+- The daemon executes on the host with native root authority (`UID 0`).
+- By default, access to this socket does not enforce fine-grained access control or command filtering. Any process capable of writing to `/var/run/docker.sock` can instruct the host daemon to provision containers, mount underlying host storage devices, and disable kernel containment profiles.
+- As cataloged under MITRE ATT&CK [T1611](https://attack.mitre.org/techniques/T1611/), mounting the Docker daemon socket inside an untrusted container collapses the security boundary between guest workload and host operating system.
 
 ---
 
 ## Technical Objectives
 
-1. From within `cicd_runner_pipeline`, confirm the presence, filesystem permissions, and responsiveness of the exposed Docker socket.
-2. Leverage the local Docker client to orchestrate a breakout container on the host daemon.
-3. Establish access to the host's root filesystem.
-4. Locate the host security flag located at `/root/host_flag.txt`.
-5. Extract and persist the flag value to `/tmp/flag2.txt` on the host machine.
+1. Access `cicd_runner_pipeline` and audit the permissions of `/var/run/docker.sock`.
+2. Confirm API responsiveness by querying host daemon state through the container's native Docker client.
+3. Formulate and launch an unconfined auxiliary container that bind-mounts the host root filesystem (`/`).
+4. Transition the execution context into the host root filesystem using `chroot(2)` or direct path traversal.
+5. Recover the host administrative flag from `/root/host_flag.txt`.
+6. Exit the breakout session and store the recovered token in `/tmp/flag2.txt` on the host.
 
 ---
 
-## Investigation Vectors and Execution Guidelines
+## Execution Guidelines
 
-### Socket Verification
-Audit the `/var/run/` directory inside `cicd_runner_pipeline`. Inspect the inode type of `docker.sock` (`srw-rw----`) and confirm whether your current container context possesses read and write permissions against it. Use the container's installed `docker` binary to query host daemon state (such as enumerating sibling containers).
+### 1. Socket Audit and IPC Verification
+From inside `cicd_runner_pipeline`, verify that the UNIX socket file exists in `/var/run/` and confirm read/write permissions (`srw-rw----`). Execute `docker ps` from within the runner. Observe that the returned container list includes sibling workloads running on the host system, demonstrating uninhibited communication with `dockerd`.
 
-### Breakout Mechanics
-To traverse from the container execution context to the host filesystem, construct a deployment request directed at the host daemon:
-- **Image Selection**: Use a standard minimal utility image present on the host (such as `alpine`).
-- **Filesystem Mapping**: Utilize the volume mount flag (`-v` or `--mount`) to bind-mount the host's absolute root directory (`/`) into an arbitrary path inside the newly requested container (e.g., `/mnt/host` or `/host`).
-- **Context Transition**: Consider how you will interact with the mounted host filesystem. You may directly reference mounted files, or execute a context switch into the mounted root directory using `chroot(2)` / `chroot(8)` to establish an interactive root shell within the host's operating system environment.
+### 2. Breakout Container Formulation
+To escape the runner's isolated mount namespace, construct a `docker run` command submitted to the host daemon:
+- **Base Image**: Select an existing minimal utility image pre-cached on the system (such as `alpine`).
+- **Filesystem Mapping**: Use the volume parameter (`-v` or `--mount`) to map the host machine's absolute root directory (`/`) into a target directory within the auxiliary container (such as `/mnt/host`).
+- **Execution Context**: Execute an interactive shell within the auxiliary container. To interact with the host operating system directly, apply `chroot(8)` against your mounted directory to redefine the apparent root directory for the current subshell process. Alternatively, investigate namespace-switching primitives using `nsenter(1)`.
 
-### Flag Retrieval
-Identify and read the sensitive administrative flag file on the host filesystem: `/root/host_flag.txt`.
+### 3. Host Flag Extraction
+Once inside the host filesystem context, inspect the contents of `/root/host_flag.txt`. Record the full flag string.
+
+### 4. Cleanup and Deliverable Persistence
+Terminate the auxiliary breakout container and exit the runner container session. On the host terminal, write the captured token into `/tmp/flag2.txt`:
+
+```text
+Deliverable: /tmp/flag2.txt
+Content:     FLAG{...}
+```
 
 ---
 
 ## Verification Requirements
 
-Store the recovered flag string in `/tmp/flag2.txt` on the host:
-
-```text
-Target File: /tmp/flag2.txt
-Expected Format: FLAG{...}
-```
-
-Validate the challenge using the Killercoda interface or by executing:
+Ensure `/tmp/flag2.txt` contains the host flag string. Run the verification harness:
 
 ```bash
 /step2/verify.sh

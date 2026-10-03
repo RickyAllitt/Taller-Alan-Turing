@@ -4,7 +4,7 @@
 
 At 03:42 UTC, runtime telemetry from host infrastructure flagged anomalous process spawning and unauthorized IPC requests on continuous integration worker `cicd_runner_pipeline`. Initial telemetry indicates that an untrusted CI/CD workflow executed arbitrary logic within the containerized build worker, initiating lateral enumeration against the host kernel.
 
-This operational engagement requires you to perform offensive reconstruction, digital forensic triage, and baseline security re-engineering.
+This operational engagement requires you to perform offensive reconstruction, digital forensic triage, and baseline security re-engineering within a strict 75-minute operational window.
 
 ```text
 +-----------------------------------------------------------------------------------+
@@ -34,17 +34,16 @@ This operational engagement requires you to perform offensive reconstruction, di
 
 ---
 
-## Scope of Work and Rules of Engagement
+## Operational Roadmap & Time Allocation
 
-The assessment is partitioned into two functional disciplines:
+The 75-minute engagement is partitioned into four sequential operational phases:
 
-### Phase 1: Attack Reconstruction and DFIR Triage (Challenges 1 to 3)
-1. **In-Memory Credential Harvesting**: Interrogate kernel-exposed process telemetry to recover sensitive production credentials leaking through the process hierarchy.
-2. **UNIX Socket Exploitation**: Exploit host daemon socket exposure to achieve a full container breakout and acquire host root access.
-3. **Forensic Delta Analysis and Threat Hunting**: Identify filesystem modifications within the container storage driver layers and author an enterprise detection rule using YARA.
-
-### Phase 2: Defensive Remediation and Hardening (Challenge 4)
-1. **Container Security Architecture**: Re-engineer the service deployment manifest to enforce immutable root filesystems, Linux capability restriction, non-root user execution, and socket de-provisioning according to CIS Docker Benchmark standards.
+| Phase | Technical Focus | Core Framework | Time Budget |
+| :--- | :--- | :--- | :--- |
+| **Challenge 1** | In-Memory Credential Harvesting | MITRE ATT&CK T1195.002 | 12 - 15 min |
+| **Challenge 2** | UNIX Domain Socket Breakout | MITRE ATT&CK T1611 | 15 - 18 min |
+| **Challenge 3** | OverlayFS Triage & YARA Authoring | SANS / DFIR Methodology | 20 - 23 min |
+| **Challenge 4** | CIS Hardening & Empirical Validation | CIS Docker Benchmark v1.6.0 | 15 - 18 min |
 
 ---
 

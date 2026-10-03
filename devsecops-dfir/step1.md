@@ -1,53 +1,67 @@
 # Challenge 1: Poisoned Pipeline Execution & Process Memory Harvesting
 
+**Time Allocation: 12 - 15 minutes**
+
+---
+
 ## Threat Modeling: In-Memory Credential Exposure
 
-Under the Poisoned Pipeline Execution (PPE) taxonomy (MITRE ATT&CK [T1195.002](https://attack.mitre.org/techniques/T1195/002/)), untrusted code execution within a continuous integration build runner allows adversaries to inspect the container environment. A widespread architectural deficiency in CI/CD pipeline agents involves injecting high-privilege secrets directly into the initial executor process or container entrypoint.
+Under the Poisoned Pipeline Execution (PPE) taxonomy (MITRE ATT&CK [T1195.002](https://attack.mitre.org/techniques/T1195/002/)), unreviewed or malicious Pull Requests executed within continuous integration build nodes can interrogate the execution environment. A frequent architectural deficiency in automated runners is the injection of static deployment secrets directly into the initial executor process or container entrypoint wrapper.
 
-When an unprivileged build job or subshell executes within the same container namespace:
-- Child sessions spawned via secondary execution channels (such as supplementary shells or task runners) do not necessarily inherit variables that were unexported or cleared by child wrappers.
-- However, Linux process isolation boundaries inside a container depend entirely on namespaces. When containers run without internal PID namespace virtualization, all processes share a common `/proc` view.
-- Under the Linux pseudo-filesystem `/proc`, the virtual file `/proc/[PID]/environ` exposes the initial environment block passed to `execve(2)` when that process was created.
+When build tasks execute within the container:
+- Child sessions spawned via secondary channels (such as subshells or `docker exec` sessions) often run with sanitized or restricted environment tables, giving operators a false impression that parent secrets are concealed.
+- However, standard Linux container isolation relies on namespaces. When tasks share a common PID namespace, all processes possess read access to the pseudo-filesystem `/proc` for processes running under the same UID (or as root).
+- The Linux kernel exposes initial process environment blocks via `/proc/[PID]/environ`.
+
+---
+
+## Kernel Architecture: Memory Layout of `/proc/[PID]/environ`
+
+The `/proc/[PID]/environ` file is a virtual interface generated dynamically by the Linux kernel from the process memory descriptors:
+- The kernel reads the memory address range bounded by `mm_struct->env_start` and `mm_struct->env_end` in the target process address space.
+- Format: Under POSIX standards, the environment block consists of consecutive `KEY=VALUE` assignments terminated by a null byte (`\x00` / ASCII 0), rather than standard line-break characters (`\n`).
+- Binary Stream Behavior: Because standard text filters (`grep`, `tail`, `less`) interpret null bytes as binary delimiters or string terminators, passing raw pseudo-files directly to line-based utilities can lead to truncated reads or unstructured binary dumps.
+
+To transform this memory stream into searchable, line-delimited records, leverage standard POSIX stream manipulation tools:
+- `tr(1)`: Translate characters across byte boundaries (e.g., mapping `\0` to `\n`).
+- `strings(1)`: Scan binary byte streams and extract sequences of printable characters.
+- `awk(1)`: Re-parse field records using custom record separators (`RS="\0"`).
 
 ---
 
 ## Technical Objectives
 
-1. Access the target workload container named `cicd_runner_pipeline`.
-2. Inspect the process hierarchy and determine the process identifier (PID) of the primary worker daemon.
-3. Interrogate the process memory structures exposed by the Linux kernel under `/proc` to identify leaked production credentials.
-4. Extract the value associated with the variable `DEPLOY_PRODUCTION_KEY`.
-5. Persist the recovered secret into `/tmp/flag1.txt` on the host filesystem.
+1. Attach an interactive shell to the active workload container: `cicd_runner_pipeline`.
+2. Enumerate the process table to map process lineage and identify the PID of the root pipeline daemon.
+3. Inspect the virtual memory environment mapping of PID 1 under `/proc`.
+4. Transform the null-terminated byte stream into line-delimited text and isolate the production credential associated with `DEPLOY_PRODUCTION_KEY`.
+5. Exit the container and write the isolated token to `/tmp/flag1.txt` on the host machine.
 
 ---
 
-## Investigation Vectors and Execution Guidelines
+## Execution Guidelines
 
-### Process Tree Enumeration
-Spawn an interactive shell within the target runner container using `docker exec`. Once inside, evaluate the active process table using standard POSIX process enumeration utilities (such as `ps`). Note the distinction between short-lived worker commands and long-running daemons executing at the root of the container namespace (PID 1).
+### 1. Workload Attachment and Process Mapping
+Access `cicd_runner_pipeline` using `docker exec`. Inspect running processes using `ps -ef` or `ps aux`. Differentiate between transient subshell processes and the persistent daemon executing as the namespace root (PID 1).
 
-### Memory Block Parsing
-Examine the process environment table corresponding to the initial daemon process.
+### 2. Environment Stream Interrogation
+Inspect `/proc/1/environ`. Observe that querying `env` inside your current subshell does not reveal parent variables, but reading the memory structure of PID 1 exposes the underlying assignments passed during container initialization.
 
-In the Linux kernel, `/proc/[PID]/environ` represents an array of null-byte (`0x00` / ASCII `\0`) delimited key-value strings (`KEY=VALUE\0KEY2=VALUE2...`). Because standard shell utilities treat null bytes as string terminators or non-printable delimiters, executing standard line-oriented commands like `grep` directly against raw pseudo-files will often fail to produce parsed records or will return the entire stream as a single binary blob.
+Using POSIX stream manipulation (`tr(1)`, `strings(1)`, or equivalent utilities), format the stream into individual lines and filter for the assignment key prefix `DEPLOY_` or the standard flag format `FLAG{...}`.
 
-Determine which native text-processing tools (such as `tr(1)`, `strings(1)`, `awk(1)`, or `sed(1)`) allow you to translate null-byte delimiters into standard newline characters (`\n`), enabling precise regular expression filtering.
+### 3. Artifact Extraction
+Return to the host environment shell (`exit`) and store the captured credential in `/tmp/flag1.txt`:
 
-### Key Recovery
-Filter the parsed output for variables prefixed with `DEPLOY_` or containing standard flag encodings (`FLAG{...}`).
+```text
+Deliverable: /tmp/flag1.txt
+Content:     FLAG{...}
+```
 
 ---
 
 ## Verification Requirements
 
-Return to the host environment and write the isolated flag string into `/tmp/flag1.txt`:
-
-```text
-Target File: /tmp/flag1.txt
-Expected Format: FLAG{...}
-```
-
-Once written, execute the verification check using the Killercoda interface or by invoking:
+Ensure `/tmp/flag1.txt` exists on the host and contains the exact flag string. Trigger the automated evaluation script:
 
 ```bash
 /step1/verify.sh
