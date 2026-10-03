@@ -16,6 +16,6 @@ echo "[CI/CD Pipeline Daemon] Worker agent initialized. Listening for jobs..."
 
 # Main loop: Simulates worker polling pipeline job queue
 while true; do
-    echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] [CI/CD Worker] Queue status: IDLE. Ready for webhook triggers."
+    echo "[$(date '+%Y-%m-%d %I:%M:%S %p')] [CI/CD Worker] Queue status: IDLE. Ready for webhook triggers."
     sleep 15
 done

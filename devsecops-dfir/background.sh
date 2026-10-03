@@ -20,7 +20,7 @@ cleanup_trap() {
 }
 trap cleanup_trap EXIT ERR
 
-echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] [INIT] Starting Killercoda background setup..."
+echo "[$(date '+%Y-%m-%d %I:%M:%S %p')] [INIT] Starting Killercoda background setup..."
 
 # 1. Ensure Docker daemon is active and responsive
 echo "[INIT] Verifying Docker daemon readiness..."
@@ -79,7 +79,7 @@ echo "========================================================"
 trap "echo '[CI/CD Daemon] Received shutdown signal. Terminating.'; exit 0" SIGINT SIGTERM
 echo "[CI/CD Pipeline Daemon] Worker agent initialized. Listening for jobs..."
 while true; do
-    echo "[$(date -u '+%Y-%m-%dT%H:%M:%SZ')] [CI/CD Worker] Queue status: IDLE. Ready for webhook triggers."
+    echo "[$(date '+%Y-%m-%d %I:%M:%S %p')] [CI/CD Worker] Queue status: IDLE. Ready for webhook triggers."
     sleep 15
 done
 EOF

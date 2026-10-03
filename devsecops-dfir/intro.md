@@ -2,7 +2,7 @@
 
 ## Technical Incident Overview
 
-At 03:42 UTC, runtime telemetry from host infrastructure flagged anomalous process spawning and unauthorized IPC requests on continuous integration worker `cicd_runner_pipeline`. Initial telemetry indicates that an untrusted CI/CD workflow executed arbitrary logic within the containerized build worker, initiating lateral enumeration against the host kernel.
+At 03:42 AM (Spanish local time / CET), runtime telemetry from host infrastructure flagged anomalous process spawning and unauthorized IPC requests on continuous integration worker `cicd_runner_pipeline`. Initial telemetry indicates that an untrusted CI/CD workflow executed arbitrary logic within the containerized build worker, initiating lateral enumeration against the host kernel.
 
 This operational engagement requires you to perform offensive reconstruction, digital forensic triage, and baseline security re-engineering within a strict 75-minute operational window.
 
