@@ -63,7 +63,7 @@ done
 printf "\r${GREEN}[✔] Provisioning complete! All systems operational.                                     ${NC}\n\n"
 
 # Ensure score and hint command binaries exist in system PATH
-mkdir -p /usr/local/bin
+mkdir -p /usr/local/bin /assets/scoring
 for candidate in \
     "/usr/local/bin/score_client.sh" \
     "/assets/scoring/score_client.sh" \
@@ -77,6 +77,14 @@ for candidate in \
     fi
 done
 
+if [ ! -x "/usr/local/bin/score" ]; then
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/config.env -o /assets/scoring/config.env 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/score_client.sh -o /usr/local/bin/score 2>/dev/null || true
+    chmod 755 /usr/local/bin/score 2>/dev/null || true
+    cp /usr/local/bin/score /usr/local/bin/score_client.sh 2>/dev/null || true
+    cp /usr/local/bin/score /assets/scoring/score_client.sh 2>/dev/null || true
+fi
+
 for candidate in \
     "/usr/local/bin/hint" \
     "/assets/scoring/hint.sh" \
@@ -88,6 +96,12 @@ for candidate in \
         break
     fi
 done
+
+if [ ! -x "/usr/local/bin/hint" ]; then
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/hint.sh -o /usr/local/bin/hint 2>/dev/null || true
+    chmod 755 /usr/local/bin/hint 2>/dev/null || true
+    cp /usr/local/bin/hint /assets/scoring/hint.sh 2>/dev/null || true
+fi
 
 # Operative Registration for Live Leaderboard & Points System
 if [ ! -f "/tmp/session_state.json" ]; then
