@@ -1,44 +1,44 @@
-# Challenge 4: CIS Hardening & Empirical Validation
+# Desafío 4: Bastionado CIS y Validación Empírica (DevSecOps)
 
-**Time Allocation: 15 - 18 minutes**
-
----
-
-## DevSecOps Engineering: CIS Docker Benchmark Compliance
-
-In earlier challenges, you analyzed how default runtime configurations enable credential theft, host filesystem compromise, and uninhibited malware persistence. To establish a secure operational baseline, workloads must implement **Defense-in-Depth** and **Least Privilege** controls defined in the **CIS Docker Benchmark** and **NIST SP 800-190** (Application Container Security Guide).
+**Tiempo Asignado: 15 - 18 minutos**
 
 ---
 
-## Security Remediation Matrix
+## Ingeniería DevSecOps: Cumplimiento con CIS Docker Benchmark
 
-The following table correlates the vulnerabilities exploited during the simulation with their corresponding CIS Docker Benchmark controls and required Docker Compose directives:
+En los desafíos anteriores analizaste cómo las configuraciones por defecto permiten el robo de credenciales, el compromiso del sistema anfitrión y la persistencia de malware. Para establecer una base operativa segura, las cargas de trabajo deben incorporar controles de **Defensa en Profundidad** y **Mínimo Privilegio** definidos en la guía **CIS Docker Benchmark** y en el estándar **NIST SP 800-190** (Application Container Security Guide).
 
-| Vulnerability / Attack Vector | Exploited Condition in Lab | CIS Benchmark Control | Docker Compose Directive |
+---
+
+## Matriz de Remediación de Seguridad
+
+La siguiente tabla relaciona los vectores de ataque explotados durante la simulación con sus controles correspondientes de CIS Docker Benchmark y las directivas requeridas en Docker Compose:
+
+| Vector de Ataque / Vulnerabilidad | Condición Explotada en el Laboratorio | Control CIS Benchmark | Directiva en Docker Compose |
 | :--- | :--- | :--- | :--- |
-| **Daemon API Hijacking** | `/var/run/docker.sock` mounted in container | **CIS 5.31**: Do not mount Docker socket | Remove `- /var/run/docker.sock:/var/run/docker.sock` from `volumes` |
-| **Root Execution Context** | Process executes as default `UID 0` | **CIS 4.1**: Create and enforce non-root user | `user: "10001:10001"` |
-| **Implant Persistence** | Writable container root filesystem | **CIS 5.12**: Mount container rootfs as read-only | `read_only: true` |
-| **Kernel Privilege Abuse** | Default ambient Linux capabilities retained | **CIS 5.2**: Restrict Linux capabilities | `cap_drop: ["ALL"]` |
-| **Privilege Escalation** | SUID/SGID binary execution | **CIS 5.25**: Restrict privilege escalation | `security_opt: ["no-new-privileges:true"]` |
-| **Scratch Space Availability** | Read-only rootfs prevents necessary temporary writes | **NIST SP 800-190**: Isolated ephemeral partitions | `tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]` |
+| **Secuestro de API del Demonio** | Socket `/var/run/docker.sock` montado | **CIS 5.31**: No montar el socket de Docker | Eliminar `- /var/run/docker.sock:/var/run/docker.sock` de `volumes` |
+| **Contexto de Ejecución Root** | El proceso corre como superusuario (`UID 0`) | **CIS 4.1**: Configurar y forzar usuario no root | `user: "10001:10001"` |
+| **Persistencia de Implantes** | Sistema de ficheros raíz modificable | **CIS 5.12**: Montar sistema raíz en sólo lectura | `read_only: true` |
+| **Abuso de Privilegios del Kernel** | Capacidades (*capabilities*) Linux por defecto | **CIS 5.2**: Restringir capacidades Linux | `cap_drop: ["ALL"]` |
+| **Escalada de Privilegios** | Ejecución de binarios con bit SUID/SGID | **CIS 5.25**: Restringir escalada de privilegios | `security_opt: ["no-new-privileges:true"]` |
+| **Espacio de Trabajo Efímero** | La raíz de sólo lectura bloquea escrituras en `/tmp` | **NIST SP 800-190**: Particiones efímeras en RAM | `tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]` |
 
 ---
 
-## Technical Objectives
+## Objetivos Técnicos
 
-1. Audit the existing vulnerable configuration at `/assets/docker-compose.yml`.
-2. Author a hardened service manifest at `/assets/docker-compose.hardened.yml`.
-3. Apply all six security controls documented in the remediation matrix.
-4. Redeploy the service using `docker compose` with the `--force-recreate` flag.
-5. Execute empirical validation commands to confirm that breakout vectors, unauthorized writes, and privilege escalations fail with kernel-enforced errors.
+1. Auditar la configuración vulnerable existente en `/assets/docker-compose.yml`.
+2. Crear el manifiesto de servicio securizado en `/assets/docker-compose.hardened.yml`.
+3. Aplicar los seis controles de seguridad descritos en la matriz de remediación.
+4. Redesplegar el servicio utilizando `docker compose` con la opción `--force-recreate`.
+5. Ejecutar comandos de validación empírica para confirmar que los intentos de fuga, escrituras no autorizadas y escaladas de privilegios son denegados directamente por el kernel de Linux.
 
 ---
 
-## Execution Guidelines
+## Guía de Ejecución
 
-### 1. Hardened Manifest Construction
-Create and edit `/assets/docker-compose.hardened.yml`. Preserve the original service name (`cicd_runner_pipeline`), image (`alan-turing/cicd-runner:vulnerable`), and environment variables (`RUNNER_NAME`, `RUNNER_ORGANIZATION`, `CI_ENVIRONMENT`), while integrating the hardening parameters:
+### 1. Construcción del Manifiesto Bastionado
+Crea y edita el fichero `/assets/docker-compose.hardened.yml`. Mantén el nombre del servicio (`cicd_runner_pipeline`), la imagen (`alan-turing/cicd-runner:vulnerable`) y las variables de entorno originales (`RUNNER_NAME`, `RUNNER_ORGANIZATION`, `CI_ENVIRONMENT`), integrando los parámetros de bastionado requeridos:
 
 ```yaml
 version: '3.8'
@@ -60,61 +60,61 @@ services:
       - RUNNER_NAME=worker-01
       - RUNNER_ORGANIZATION=AlanTuring-SecOps
       - CI_ENVIRONMENT=production
-    # NOTE: The /var/run/docker.sock volume has been completely removed.
+    # NOTA: El volumen /var/run/docker.sock se ha eliminado completamente.
 ```
 
-### 2. Service Redeployment
-Deploy the hardened configuration, instructing Docker Compose to recreate the container instance:
+### 2. Redespliegue del Servicio
+Despliega la nueva configuración forzando a Docker Compose a recrear el contenedor:
 
 ```bash
 docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate
 ```
 
-Verify that the newly deployed container is running:
+Comprueba que el nuevo contenedor está activo y en ejecución:
 
 ```bash
 docker ps --filter "name=cicd_runner_pipeline"
 ```
 
-### 3. Empirical Security Validation
-Execute direct validation tests against the running container to prove that the defenses are actively enforced by the Linux kernel:
+### 3. Validación Empírica de Seguridad
+Ejecuta pruebas directas contra el contenedor en ejecución para verificar que las defensas están activas y siendo aplicadas por el kernel del sistema:
 
-1. **Verify Filesystem Immutability**:
-   Attempt to create an arbitrary file on the root filesystem:
+1. **Verificar la Inmutabilidad del Sistema de Ficheros:**
+   Intenta escribir un fichero arbitrario en la raíz:
    ```bash
    docker exec cicd_runner_pipeline touch /test_write
    ```
-   *Expected Result*: `touch: /test_write: Read-only file system` (Kernel error code `EROFS`).
+   *Resultado Esperado:* `touch: /test_write: Read-only file system` (código de error del kernel `EROFS`).
 
-2. **Verify User Context**:
-   Query the effective user and group identifiers:
+2. **Verificar el Contexto de Usuario No Privilegiado:**
+   Comprueba el UID y GID efectivos:
    ```bash
    docker exec cicd_runner_pipeline id
    ```
-   *Expected Result*: `uid=10001(cicduser) gid=10001(cicdgroup)`.
+   *Resultado Esperado:* `uid=10001(cicduser) gid=10001(cicdgroup)`.
 
-3. **Verify Daemon Socket Elimination**:
-   Confirm that the UNIX domain socket is absent:
+3. **Verificar la Eliminación del Socket del Demonio:**
+   Comprueba que el socket UNIX ya no está accesible:
    ```bash
    docker exec cicd_runner_pipeline ls -la /var/run/docker.sock
    ```
-   *Expected Result*: `ls: /var/run/docker.sock: No such file or directory`.
+   *Resultado Esperado:* `ls: /var/run/docker.sock: No such file or directory`.
 
-4. **Verify Ephemeral Storage**:
-   Confirm that write operations to `/tmp` remain functional while backed purely by volatile RAM:
+4. **Verificar el Almacenamiento Efímero Seguro:**
+   Confirma que se puede escribir en `/tmp` y que la memoria está respaldada de forma volátil en RAM:
    ```bash
-   docker exec cicd_runner_pipeline touch /tmp/test_ok && echo "Tmpfs write successful"
+   docker exec cicd_runner_pipeline touch /tmp/test_ok && echo "Escritura tmpfs correcta"
    ```
-   *Expected Result*: `Tmpfs write successful`.
+   *Resultado Esperado:* `Escritura tmpfs correcta`.
 
 ---
 
-## Verification Requirements
+## Requisitos de Verificación
 
-Confirm that `/assets/docker-compose.hardened.yml` exists and that `cicd_runner_pipeline` reflects the audited security parameters. Execute the automated compliance audit:
+Verifica que el fichero `/assets/docker-compose.hardened.yml` existe y que el contenedor `cicd_runner_pipeline` cumple con todos los parámetros de seguridad auditados. Ejecuta la auditoría automatizada:
 
 ```bash
 /step4/verify.sh
 ```
 
-Upon successful validation, **250 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 4` for tactical guidance.
+Al superar la auditoría con éxito, recibirás **250 Puntos Base** (menos las pistas que hayas solicitado), completando la puntuación máxima del taller. Si necesitas asistencia, ejecuta `hint 4`.

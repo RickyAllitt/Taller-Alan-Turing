@@ -1,6 +1,6 @@
 {
-  "title": "DevSecOps & Container DFIR: Supply Chain Attacks, Breakouts & Hardening",
-  "description": "Interactive scenario exploring CI/CD pipeline poisoning, process memory secret harvesting, Docker socket container escapes, OverlayFS YARA triage, and CIS Docker Benchmark hardening.",
+  "title": "DevSecOps y DFIR en Contenedores: Cadena de Suministro, Fugas y Bastionado",
+  "description": "Escenario interactivo sobre envenenamiento de pipelines CI/CD, extracción de secretos de procesos en memoria, fugas de contenedor vía Docker socket, triaje forense con YARA en OverlayFS y bastionado CIS Docker Benchmark.",
   "difficulty": "Intermediate",
   "time": "75 minutes",
   "details": {
@@ -11,22 +11,22 @@
     },
     "steps": [
       {
-        "title": "Challenge 1: Poisoned Pipeline Execution & Secret Harvesting",
+        "title": "Desafío 1: Envenenamiento de Pipeline y Extracción de Secretos en Memoria",
         "text": "step1.md",
         "verify": "step1/verify.sh"
       },
       {
-        "title": "Challenge 2: Container Breakout via Docker Socket",
+        "title": "Desafío 2: Fuga de Contenedor mediante Socket de Docker",
         "text": "step2.md",
         "verify": "step2/verify.sh"
       },
       {
-        "title": "Challenge 3: DFIR Triage & YARA Threat Hunting",
+        "title": "Desafío 3: Triaje Forense (DFIR) y Detección con Reglas YARA",
         "text": "step3.md",
         "verify": "step3/verify.sh"
       },
       {
-        "title": "Challenge 4: Production Hardening (DevSecOps)",
+        "title": "Desafío 4: Bastionado de Producción y Validación Empírica (DevSecOps)",
         "text": "step4.md",
         "verify": "step4/verify.sh"
       }

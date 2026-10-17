@@ -1,93 +1,93 @@
-# Operational Engagement Briefing: Cloud-Native DFIR and Workload Hardening
+# Briefing Operativo: DFIR en Contenedores y Bastionado DevSecOps
 
-## Technical Incident Overview
+## Resumen Técnico del Incidente
 
-At 03:42 AM (Spanish local time / CET), runtime telemetry from host infrastructure flagged anomalous process spawning and unauthorized IPC requests on continuous integration worker `cicd_runner_pipeline`. Initial telemetry indicates that an untrusted CI/CD workflow executed arbitrary logic within the containerized build worker, initiating lateral enumeration against the host kernel.
+A las 03:42 AM (hora local de España / CET), la telemetría en tiempo real de la infraestructura host detectó la generación anómala de procesos y peticiones IPC no autorizadas en el nodo de integración continua `cicd_runner_pipeline`. Los indicios preliminares apuntan a que un flujo de trabajo CI/CD no verificado ejecutó código arbitrario dentro del contenedor de compilación, iniciando una fase de reconocimiento lateral contra el kernel del host.
 
-This operational engagement requires you to perform offensive reconstruction, digital forensic triage, and baseline security re-engineering within a strict 75-minute operational window.
+En este ejercicio operativo deberás realizar la reconstrucción ofensiva de la intrusión, ejecutar el triaje forense digital (DFIR) e implementar el bastionado de seguridad conforme a estándares industriales en una ventana operativa estricta de 75 minutos.
 
 ```text
 +-----------------------------------------------------------------------------------+
-| Host System (Ubuntu 22.04 LTS / Host Environment)                                 |
+| Sistema Host (Ubuntu 22.04 LTS / Entorno Host)                                    |
 |                                                                                   |
-|  Filesystem Artifacts                                                             |
-|    /root/host_flag.txt               Host root integrity target (Challenge 2)    |
-|    /evidence/backdoor_implant.sh     Recovered malicious artifact (Challenge 3)   |
-|    /assets/docker-compose.yml        Vulnerable workload manifest (Challenge 4)   |
+|  Artefactos en el Sistema de Ficheros                                             |
+|    /root/host_flag.txt               Objetivo de integridad de root (Desafío 2)   |
+|    /evidence/backdoor_implant.sh     Artefacto malicioso recuperado (Desafío 3)   |
+|    /assets/docker-compose.yml        Manifiesto vulnerable original (Desafío 4)   |
 |                                                                                   |
-|  Docker Engine Daemon (dockerd)                                                   |
+|  Demonio Docker (dockerd)                                                         |
 |    UNIX Domain Socket: /var/run/docker.sock <═════════════════════════════╗       |
-|                                                                           ║ Mount |
-|  Container Boundary: cicd_runner_pipeline                                 ║       |
+|                                                                           ║ Montaje
+|  Límite del Contenedor: cicd_runner_pipeline                              ║       |
 |                                                                           ║       |
-|    Mounted Socket: /var/run/docker.sock <═════════════════════════════════╝       |
+|    Socket Montado: /var/run/docker.sock <═════════════════════════════════╝       |
 |                                                                                   |
-|    Process Hierarchy                                                              |
+|    Jerarquía de Procesos                                                          |
 |      PID 1: /app/pipeline_runner.sh                                               |
-|        └── Virtual Memory: /proc/1/environ (Challenge 1)                          |
+|        └── Memoria Virtual: /proc/1/environ (Desafío 1)                           |
 |                                                                                   |
-|    OverlayFS Storage Layout                                                       |
-|      UpperDir: Dynamic copy-on-write mutable layer (Challenge 3)                  |
-|      LowerDir: Base image immutable layers                                        |
+|    Disposición de Almacenamiento OverlayFS                                        |
+|      UpperDir: Capa mutable dinámica copy-on-write (Desafío 3)                    |
+|      LowerDir: Capas inmutables de la imagen base                                 |
 +-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## Operational Roadmap & Scoring Economy
+## Hoja de Ruta Operativa y Economía de Puntuación
 
-The 75-minute engagement is partitioned into four sequential operational phases evaluated on a **1,000 Base Points** scale. Completion timestamps are recorded in Spanish local time (AM/PM) and synchronized in real time to the cohort scoreboard.
+El ejercicio de 75 minutos se estructura en cuatro fases operativas consecutivas evaluadas sobre una escala de **1.000 Puntos Base**. Las marcas de tiempo de finalización se registran en horario local español (AM/PM) y se sincronizan en tiempo real con el marcador de la clase.
 
-| Phase | Technical Focus | Time Budget | Base Score | Tactical Hints Penalty |
+| Fase | Enfoque Técnico | Tiempo Estimado | Puntuación Base | Penalización por Pistas Tácticas |
 | :--- | :--- | :---: | :---: | :--- |
-| **Challenge 1** | In-Memory Credential Harvesting | 12 - 15 min | 200 pts | Tier 1: -25 pts &bull; Tier 2: -50 pts |
-| **Challenge 2** | UNIX Domain Socket Breakout | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
-| **Challenge 3** | OverlayFS Triage & YARA Authoring | 20 - 23 min | 300 pts | Tier 1: -25 pts &bull; Tier 2: -50 pts &bull; Tier 3: -75 pts |
-| **Challenge 4** | CIS Hardening & Empirical Validation | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
+| **Desafío 1** | Extracción de Credenciales en Memoria | 12 - 15 min | 200 pts | Nivel 1: -25 pts &bull; Nivel 2: -50 pts |
+| **Desafío 2** | Fuga de Contenedor vía Socket UNIX | 15 - 18 min | 250 pts | Nivel 1: -30 pts &bull; Nivel 2: -60 pts |
+| **Desafío 3** | Triaje en OverlayFS y Reglas YARA | 20 - 23 min | 300 pts | Nivel 1: -25 pts &bull; Nivel 2: -50 pts &bull; Nivel 3: -75 pts |
+| **Desafío 4** | Bastionado CIS y Validación Empírica | 15 - 18 min | 250 pts | Nivel 1: -30 pts &bull; Nivel 2: -60 pts |
 
-### Operative Call Sign & Scoreboard Registration
-At startup, your terminal automatically provisions an initial operative call sign (e.g., `operative-4821`).
+### Registro de Nombre / Indicativo en el Marcador
+Al iniciar la sesión, la terminal asigna automáticamente un indicativo provisional (por ejemplo, `operative-4821`).
 
-To customize your operative handle on the live cohort scoreboard, run the following command in your terminal:
+Para establecer tu nombre o alias en el marcador en vivo de la clase, ejecuta en la terminal:
 
 ```bash
-score register <your_call_sign>
+score register <tu_nombre_o_alias>
 ```
 
-Example:
+Ejemplo:
 ```bash
 score register alberto-sec
 ```
 
-- **Naming Requirements:** 2 to 20 characters (alphanumeric, hyphens, and underscores).
-- **Telemetry Correlation:** Your call sign displays your score, completion timestamps (Spanish local time / CET), hint deductions, and First Blood recognitions on the scoreboard.
-- **Status Check:** Execute `score status` at any point during the engagement to inspect your active telemetry state and current points.
+- **Requisitos de formato:** Entre 2 y 20 caracteres alfanuméricos (guiones y guiones bajos permitidos).
+- **Correlación de telemetría:** Tu indicativo reflejará tu puntuación, marcas de tiempo (hora local española / CET), penalizaciones de pistas y reconocimientos de "First Blood" (primer participante en resolver cada fase).
+- **Consulta de estado:** Ejecuta `score status` en cualquier momento para consultar tu puntuación actual y desafíos completados.
 
-### Tactical Hint System
-If you encounter an operational impasse during any challenge, tactical guidance can be requested via the terminal command:
+### Sistema de Pistas Tácticas
+Si te encuentras bloqueado en cualquier desafío, puedes solicitar orientación técnica mediante el comando:
 
 ```bash
-hint <step_number>
+hint <numero_de_paso>
 ```
 
-Example: `hint 1` displays available tiers and point costs before confirming deduction. Unlocking hints deducts points from that challenge's base score upon successful verification.
+Ejemplo: `hint 1` muestra los niveles de pistas disponibles y el coste en puntos antes de confirmar el desbloqueo. Desbloquear pistas deduce puntos de la puntuación base de ese desafío tras su verificación.
 
-### Live Cohort Leaderboard
-Track your real-time ranking, completion times, and peer standings at:
+### Marcador en Vivo del Taller
+Sigue la clasificación en tiempo real, tiempos de entrega y avance de tus compañeros en:
 **https://rickyallitt.github.io/Taller-Alan-Turing**
 
 ---
 
-## Technical Constraints and Operational Boundaries
+## Restricciones Técnicas y Reglas Operativas
 
-- Automated verification scripts are bound to each phase. Output values must strictly adhere to the expected format and target filesystem locations specified in each section.
-- Modifying underlying system services or uninstalling monitoring components will cause verification failure.
-- Ensure all intermediate analysis scripts are stored in `/tmp` or `/evidence`.
+- Cada fase cuenta con un script de verificación automatizado. Las respuestas y ficheros generados deben respetar estrictamente las rutas y formatos especificados en cada sección.
+- Modificar servicios base del sistema operativo o desinstalar componentes de monitorización invalidará las pruebas de verificación.
+- Guarda todos tus scripts y notas intermedias en `/tmp` o `/evidence`.
 
-Confirm baseline node readiness before proceeding:
+Verifica el estado del contenedor de prácticas antes de comenzar:
 
 ```bash
 docker ps --filter "name=cicd_runner_pipeline" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 ```
 
-Advance to **Challenge 1** to begin credential reconstruction.
+Avanza al **Desafío 1** para comenzar la extracción de credenciales.

@@ -1,113 +1,113 @@
-# Challenge 3: OverlayFS Triage & YARA Authoring
+# Desafío 3: Triaje Forense en OverlayFS y Creación de Reglas YARA
 
-**Time Allocation: 20 - 23 minutes**
+**Tiempo Asignado: 20 - 23 minutos**
 
 ---
 
-## Digital Forensics Context: Ephemeral Storage Triage
+## Contexto de Informática Forense Digital (DFIR): Triaje de Almacenamiento Efímero
 
-During incident response engagements involving containerized workloads, entering a compromised container to execute investigative commands introduces critical evidentiary risks:
-- Local tools and shell utilities may have been replaced with trojanized versions.
-- Executing binaries within the live container modifies volatile memory spaces and alters file access timestamps (`atime`).
+Durante la respuesta a incidentes de seguridad que involucran contenedores, acceder directamente a un contenedor comprometido para ejecutar comandos de investigación conlleva graves riesgos probatorios:
+- Las herramientas del sistema y binarios de la shell podrían haber sido sustituidos por versiones troyanizadas.
+- La ejecución de binarios dentro del contenedor en vivo altera la memoria volátil y modifica las marcas temporales de acceso a ficheros (`atime`).
 
-In modern Linux container forensics, analysts perform offline triage directly from the host by inspecting the storage driver layout.
+En el análisis forense moderno de contenedores Linux, los analistas realizan el triaje *offline* directamente desde el host inspeccionando la disposición del controlador de almacenamiento del contenedor.
 
 ```text
-OverlayFS Structural Hierarchy
+Jerarquía Estructural de OverlayFS
 ┌──────────────────────────────────────────────────────────────┐
-│ Merged Directory: Unified view visible to running container  │
+│ Directorio Fusionado (MergedDir): Vista unificada del cont.  │
 ├──────────────────────────────────────────────────────────────┤
-│ Upper Directory (UpperDir): Writable copy-on-write layer     │
-│   ├── Modified configuration files                           │
-│   └── Attacker implants and dropped execution scripts        │
+│ Directorio Superior (UpperDir): Capa mutable copy-on-write   │
+│   ├── Ficheros de configuración modificados                  │
+│   └── Implantes y scripts maliciosos creados por el atacante │
 ├──────────────────────────────────────────────────────────────┤
-│ Lower Directory (LowerDir): Read-only immutable image layers │
+│ Directorio Inferior (LowerDir): Capas inmutables de la imagen│
 └──────────────────────────────────────────────────────────────┘
 ```
 
-The `UpperDir` path on the host contains all filesystem modifications, dropped scripts, and staging directories created during the container's lifecycle.
+La ruta del `UpperDir` en el host contiene todas las modificaciones en el sistema de ficheros, scripts volcados y carpetas creadas a lo largo del ciclo de vida del contenedor.
 
 ---
 
-## Technical Objectives
+## Objetivos Técnicos
 
-1. Query host Docker daemon metadata to locate the `UpperDir` storage path for `cicd_runner_pipeline`.
-2. Inspect the writable overlay layer on the host to isolate the malicious implant script placed by the adversary.
-3. Review the forensic copy staged at `/evidence/backdoor_implant.sh`.
-4. Author a valid, production-grade YARA rule saved at `/evidence/detect_implant.yar`.
-5. Ensure the rule specifically detects the threat script without producing false positives on benign shell utilities.
-6. Verify rule compilation and execution using `yara(1)`.
+1. Consultar los metadatos del demonio Docker en el host para localizar la ruta física de almacenamiento de `UpperDir` correspondiente a `cicd_runner_pipeline`.
+2. Inspeccionar en el host la capa modificable de OverlayFS para aislar el script o implante colocado por el adversario.
+3. Analizar la copia de triaje forense guardada en `/evidence/backdoor_implant.sh`.
+4. Escribir una regla YARA válida y apta para entornos de producción en `/evidence/detect_implant.yar`.
+5. Asegurar que la regla detecte específicamente el script malicioso sin generar falsos positivos con utilidades de shell legítimas.
+6. Comprobar la compilación y ejecución de la regla empleando `yara(1)`.
 
 ---
 
-## Execution Guidelines
+## Guía de Ejecución
 
-### 1. Storage Driver Interrogation
-From the host terminal, extract the storage driver configuration using `docker inspect`:
+### 1. Interrogación del Controlador de Almacenamiento
+Desde la terminal del host, extrae la configuración del controlador de almacenamiento con `docker inspect`:
 
 ```bash
 docker inspect cicd_runner_pipeline | jq '.[0].GraphDriver.Data'
 ```
 
-Identify the absolute filesystem path assigned to `UpperDir`. Inspect this directory path on the host system using `find` or `ls -lR`. Trace files written outside default base image directories, specifically auditing `/var/log` or administrative paths.
+Identifica la ruta absoluta en el sistema de ficheros asignada a `UpperDir`. Inspecciona dicho directorio en el sistema host utilizando `find` o `ls -lR`. Rastrea ficheros creados fuera de las rutas base normales, prestando especial atención a subdirectorios bajo `/var/log` o rutas administrativas.
 
-### 2. Static Artifact Triage
-A forensic staging copy of the identified implant is preserved at `/evidence/backdoor_implant.sh`. 
+### 2. Triaje de Artefactos Estáticos
+Se ha preservado una copia de las evidencias del implante detectado en `/evidence/backdoor_implant.sh`.
 
-Inspect the script contents using `cat` or `head`:
-- Review the execution interpreter (`#!/bin/sh`).
-- Identify the exfiltration channel (protocol, command syntax, parameters).
-- Extract unique Indicators of Compromise (IoCs): target C2 domains, endpoint URIs, and explicit comment headers.
+Inspecciona el contenido del script con `cat` o `head`:
+- Observa el intérprete de comandos (`#!/bin/sh`).
+- Identifica el mecanismo de exfiltración (protocolo, sintaxis y parámetros del comando).
+- Extrae Indicadores de Compromiso (IoCs) únicos: dominio objetivo del C2 (servidor de mando y control), rutas o endpoints URI y comentarios explícitos en la cabecera.
 
-**False-Positive Avoidance**:
-Do NOT anchor detection rules purely on generic tokens such as `#!/bin/sh`, `curl`, or `-X POST`. Rules matching only standard utility calls will generate false-positive alerts against legitimate maintenance scripts across production environments.
+**Prevención de Falsos Positivos:**
+NO diseñes reglas que dependan únicamente de cadenas genéricas como `#!/bin/sh`, `curl` o `-X POST`. Una regla que coincida solo con llamadas a utilidades básicas disparará alertas falsas contra scripts legítimos de mantenimiento en entornos de producción.
 
-### 3. YARA Rule Authoring
+### 3. Redacción de la Regla YARA
 
-Create your detection rule at `/evidence/detect_implant.yar`. To prevent syntax validation stalls, adhere to the standard YARA rule structural scaffold:
+Crea tu regla de detección en `/evidence/detect_implant.yar`. Sigue la estructura canónica de una regla YARA para evitar errores de sintaxis:
 
 ```yara
-rule Threat_Implant_Detection
+rule Deteccion_Implante_Malicioso
 {
     meta:
-        description = "Technical description of the threat implant"
-        author      = "DFIR Analyst"
-        reference   = "CPIFP Alan Turing Incident Response"
+        description = "Descripcion tecnica del implante malicioso"
+        author      = "Analista DFIR"
+        reference   = "CPIFP Alan Turing Respuesta a Incidentes"
 
     strings:
-        // Define string patterns: ASCII ($s = "..."), Hex ($h = { ... }), or Regex ($r = /.../)
-        // Select unique identifiers (C2 endpoints, exfiltration parameters, unique comments)
+        // Define patrones de cadenas: ASCII ($s = "..."), Hex ($h = { ... }) o Regex ($r = /.../)
+        // Selecciona identificadores unicos (endpoints de C2, cabeceras o parametros especificos)
 
     condition:
-        // Define matching logic (e.g., all of them, any of them, or specific boolean combinations)
+        // Define la logica de coincidencia (por ejemplo: all of them, any of them, o expresiones booleanas)
 }
 ```
 
-Populate the `strings` section with patterns matching the adversary's C2 endpoint (`http://evil-c2.attacker.internal`) and the specific script header (`# Malicious Exfiltration Hook`). Configure the `condition` block to ensure both indicators must be satisfied for a positive match.
+Configura en la sección `strings` patrones que coincidan con la URL de C2 del adversario (`http://evil-c2.attacker.internal`) y con la cabecera identificativa del script (`# Malicious Exfiltration Hook`). En el bloque `condition`, exige que ambos indicadores deban cumplirse simultáneamente para confirmar la detección.
 
-### 4. Rule Compilation and Detection Testing
-Execute YARA against the target evidence sample:
+### 4. Compilación y Validación de la Detección
+Ejecuta YARA contra la muestra de evidencia:
 
 ```bash
 yara /evidence/detect_implant.yar /evidence/backdoor_implant.sh
 ```
 
-To display matching string offsets and rule verification details:
+Para visualizar los desplazamientos (*offsets*) exactos de las cadenas encontradas:
 
 ```bash
 yara -s /evidence/detect_implant.yar /evidence/backdoor_implant.sh
 ```
 
-Ensure the tool exits with return code `0` and outputs the rule identifier followed by the target file path.
+Asegúrate de que la herramienta finalice con código de salida `0` y muestre en pantalla el identificador de la regla seguido de la ruta del archivo analizado.
 
 ---
 
-## Verification Requirements
+## Requisitos de Verificación
 
-Ensure your completed YARA rule is saved at `/evidence/detect_implant.yar`. Trigger the automated validation harness:
+Verifica que tu regla YARA terminada se encuentra guardada en `/evidence/detect_implant.yar`. Inicia el script de evaluación:
 
 ```bash
 /step3/verify.sh
 ```
 
-Upon successful validation, **300 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 3` for tactical guidance.
+Tras superar la validación se sumarán **300 Puntos Base** a tu puntuación en el marcador en vivo. Si te encuentras bloqueado, ejecuta `hint 3` para obtener pistas tácticas.

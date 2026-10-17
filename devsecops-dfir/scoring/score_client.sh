@@ -278,6 +278,9 @@ case "${ACTION}" in
     hint)
         record_hint "$2" "$3" "$4"
         ;;
+    is_unlocked)
+        is_hint_unlocked "$2" "$3"
+        ;;
     complete)
         complete_challenge "$2" "$3"
         ;;
