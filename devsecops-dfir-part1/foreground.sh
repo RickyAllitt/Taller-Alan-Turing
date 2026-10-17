@@ -79,8 +79,8 @@ for candidate in \
 done
 
 if [ ! -x "/usr/local/bin/score" ]; then
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/config.env -o /assets/scoring/config.env 2>/dev/null || true
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/score_client.sh -o /usr/local/bin/score 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part1/assets/scoring/config.env -o /assets/scoring/config.env 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part1/assets/scoring/score_client.sh -o /usr/local/bin/score 2>/dev/null || true
     chmod 755 /usr/local/bin/score 2>/dev/null || true
     cp /usr/local/bin/score /usr/local/bin/score_client.sh 2>/dev/null || true
     cp /usr/local/bin/score /assets/scoring/score_client.sh 2>/dev/null || true
@@ -99,7 +99,7 @@ for candidate in \
 done
 
 if [ ! -x "/usr/local/bin/hint" ]; then
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/hint.sh -o /usr/local/bin/hint 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part1/assets/scoring/hint.sh -o /usr/local/bin/hint 2>/dev/null || true
     chmod 755 /usr/local/bin/hint 2>/dev/null || true
     cp /usr/local/bin/hint /assets/scoring/hint.sh 2>/dev/null || true
 fi

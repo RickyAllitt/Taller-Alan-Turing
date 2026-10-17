@@ -184,9 +184,9 @@ done
 # If scoring files are still missing, fetch directly from raw repository
 if [ ! -f "/assets/scoring/score_client.sh" ]; then
     echo "[RECOVERY] Fetching scoring suite from repository..."
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/config.env -o /assets/scoring/config.env 2>/dev/null || true
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/score_client.sh -o /assets/scoring/score_client.sh 2>/dev/null || true
-    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir/assets/scoring/hint.sh -o /assets/scoring/hint.sh 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part2/assets/scoring/config.env -o /assets/scoring/config.env 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part2/assets/scoring/score_client.sh -o /assets/scoring/score_client.sh 2>/dev/null || true
+    curl -sSf https://raw.githubusercontent.com/RickyAllitt/Taller-Alan-Turing/master/devsecops-dfir-part2/assets/scoring/hint.sh -o /assets/scoring/hint.sh 2>/dev/null || true
     chmod 755 /assets/scoring/score_client.sh /assets/scoring/hint.sh 2>/dev/null || true
 fi
 

@@ -63,7 +63,7 @@ El panel de clasificación en tiempo real se encuentra en la carpeta [`docs/`](d
    }
    ```
 4. La URL de la base de datos ya está configurada con la instancia activa (`https://bootcamp-ac825-default-rtdb.europe-west1.firebasedatabase.app`) en:
-   - [`devsecops-dfir/assets/scoring/config.env`](devsecops-dfir/assets/scoring/config.env) (`FIREBASE_DATABASE_URL`)
+   - [`devsecops-dfir-part1/assets/scoring/config.env`](devsecops-dfir-part1/assets/scoring/config.env) y Part 2 (`FIREBASE_DATABASE_URL`)
    - [`docs/config.js`](docs/config.js) (`databaseURL`)
    *(O configúralo directamente desde el navegador haciendo clic en el botón "DB Settings" del Leaderboard)*.
 
@@ -80,23 +80,20 @@ El panel de clasificación en tiempo real se encuentra en la carpeta [`docs/`](d
 │   ├── style.css                          # Estilos personalizados Vanilla CSS
 │   ├── app.js                             # Lógica de sincronización SSE y métricas
 │   └── config.js                          # Configuración de Firebase y taller
-└── devsecops-dfir/                        # Escenario Killercoda
-    ├── index.json                         # Manifiesto de Killercoda
-    ├── background.sh                      # Setup desatendido y registro de herramientas
-    ├── foreground.sh                      # Bienvenida y registro del alumno
-    ├── intro.md                           # Briefing y economía de puntos
-    ├── step1.md a step4.md                # Guías técnicas de los 4 retos
-    ├── finish.md                          # Post-mortem y enlaces a estándares
-    ├── step1/ a step4/                    # Scripts de verificación con hook de scoring
-    │   └── verify.sh
-    └── assets/
-        ├── docker-compose.yml             # Despliegue vulnerable del runner
-        ├── victim/                        # Dockerfile y daemon del runner
-        ├── evidence/                      # Implante C2 para análisis DFIR
-        └── scoring/                       # Cliente de telemetría y CLI de pistas
-            ├── score_client.sh            # Cliente REST para Firebase
-            ├── hint.sh                    # CLI interactivo de pistas ('hint')
-            └── config.env                 # Variables de endpoint y taller
+├── devsecops-dfir-part1/                  # Escenario Parte 1 (Ofensiva: Retos 1 y 2 - 35 min)
+│   ├── index.json                         # Manifiesto de Killercoda Parte 1
+│   ├── background.sh / foreground.sh      # Aprovisionamiento y registro de sesión
+│   ├── intro.md / finish.md               # Briefing y cierre de la Parte 1
+│   ├── step1.md y step2.md                # Retos 1 (Inyección CI/CD) y 2 (Escape Docker Socket)
+│   ├── step1/ y step2/                    # Scripts de verificación y scoring
+│   └── assets/                            # Recursos, scoring client y pistas
+└── devsecops-dfir-part2/                  # Escenario Parte 2 (Defensiva: Retos 3 y 4 - 40 min)
+    ├── index.json                         # Manifiesto de Killercoda Parte 2
+    ├── background.sh / foreground.sh      # Aprovisionamiento y sincronización de sesión
+    ├── intro.md / finish.md               # Briefing y post-mortem final
+    ├── step3.md y step4.md                # Retos 3 (Triaje OverlayFS + YARA) y 4 (Bastionado CIS)
+    ├── step3/ y step4/                    # Scripts de verificación y scoring
+    └── assets/                            # Recursos, scoring client y pistas
 ```
 
 ---
