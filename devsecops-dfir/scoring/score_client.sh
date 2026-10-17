@@ -221,12 +221,29 @@ register_alias() {
         return 1
     fi
 
+    local old_student_id=""
+    local old_score=0
+    if [ -f "${STATE_FILE}" ]; then
+        old_student_id=$(jq -r '.studentId // ""' "${STATE_FILE}" 2>/dev/null)
+        old_score=$(jq -r '.totalScore // 0' "${STATE_FILE}" 2>/dev/null)
+    fi
+
+    local rand_suffix
+    rand_suffix=$(head -c 3 /dev/urandom | xxd -p 2>/dev/null || echo "$RANDOM")
+    local new_student_id="student_${new_alias}_${rand_suffix}"
+
     if [ -f "${STATE_FILE}" ]; then
         local tmp_json
-        tmp_json=$(jq --arg a "${new_alias}" '.alias = $a' "${STATE_FILE}")
+        tmp_json=$(jq --arg a "${new_alias}" --arg id "${new_student_id}" '.alias = $a | .studentId = $id' "${STATE_FILE}")
         echo "${tmp_json}" > "${STATE_FILE}"
     else
         init_session "${new_alias}"
+    fi
+
+    # Delete previous node if it had 0 points (e.g. replacing auto-generated operative-XXXXX)
+    if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${new_student_id}" ] && [ "${old_score}" -eq 0 ]; then
+        local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${old_student_id}.json"
+        curl -s -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
     fi
 
     sync_to_firebase
