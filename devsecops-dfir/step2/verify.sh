@@ -5,7 +5,7 @@
 # ==============================================================================
 
 FLAG_FILE="/tmp/flag2.txt"
-EXPECTED_FLAG="FLAG{host_takeover_via_docker_socket_alan_turing_2026}"
+HOST_FLAG_FILE="/root/host_flag.txt"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -18,9 +18,17 @@ if [ ! -f "${FLAG_FILE}" ]; then
     exit 1
 fi
 
+if [ ! -f "${HOST_FLAG_FILE}" ]; then
+    echo -e "${RED}[ERROR] Host root target flag missing: ${HOST_FLAG_FILE}.${NC}"
+    exit 1
+fi
+
+# Dynamically read the runtime generated root flag from host filesystem
+EXPECTED_FLAG=$(cat "${HOST_FLAG_FILE}" 2>/dev/null | tr -d '[:space:]')
+
 SUBMITTED_FLAG=$(grep -o "FLAG{[^}]*}" "${FLAG_FILE}" 2>/dev/null || cat "${FLAG_FILE}" | tr -d '[:space:]')
 
-if [ "${SUBMITTED_FLAG}" = "${EXPECTED_FLAG}" ]; then
+if [ -n "${EXPECTED_FLAG}" ] && [ "${SUBMITTED_FLAG}" = "${EXPECTED_FLAG}" ]; then
     echo -e "${GREEN}[PASS] Challenge 2 Complete!${NC}"
     echo -e "${GREEN}[✔] Host root takeover verified! Flag: ${EXPECTED_FLAG}${NC}"
     if [ -x "/usr/local/bin/score_client.sh" ]; then
@@ -31,6 +39,6 @@ if [ "${SUBMITTED_FLAG}" = "${EXPECTED_FLAG}" ]; then
     exit 0
 else
     echo -e "${RED}[FAIL] Incorrect flag in ${FLAG_FILE}${NC}"
-    echo -e "${YELLOW}[HINT] Found: '${SUBMITTED_FLAG}'. Expected: ${EXPECTED_FLAG}.${NC}"
+    echo -e "${YELLOW}[HINT] Found: '${SUBMITTED_FLAG}'. Expected dynamic flag format: FLAG{dckr_sock_breakout_...}. Verify host root extraction via /var/run/docker.sock.${NC}"
     exit 1
 fi

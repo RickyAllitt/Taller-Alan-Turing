@@ -23,4 +23,4 @@ RUN addgroup -g 10001 -S cicdgroup && \
 
 # Inject production deployment secret into PID 1 process memory at runtime
 # This simulates an entrypoint wrapper that injects pipeline credentials directly to PID 1
-ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='FLAG{supply_chain_credential_leaked_proc_2026}' exec /app/pipeline_runner.sh"]
+ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='FLAG{DYNAMIC_RUNTIME_SECRET}' exec /app/pipeline_runner.sh"]

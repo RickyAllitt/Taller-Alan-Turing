@@ -44,9 +44,15 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y --no-install-recommends yara jq
 
-# 3. Create Host Root Flag for Challenge 2
-echo "[FLAG] Provisioning Host Root Flag..."
-echo "FLAG{host_takeover_via_docker_socket_alan_turing_2026}" > /root/host_flag.txt
+# 3. Provision Dynamic Cryptographic Flags for Challenges 1 & 2
+echo "[FLAG] Generating unique cryptographic challenge flags..."
+FLAG1_HEX=$(openssl rand -hex 6 2>/dev/null || head -c 6 /dev/urandom | xxd -p 2>/dev/null || echo "a1b2c3d4e5f6")
+FLAG2_HEX=$(openssl rand -hex 6 2>/dev/null || head -c 6 /dev/urandom | xxd -p 2>/dev/null || echo "f6e5d4c3b2a1")
+
+DYNAMIC_FLAG1="FLAG{proc_harvest_${FLAG1_HEX}}"
+DYNAMIC_FLAG2="FLAG{dckr_sock_breakout_${FLAG2_HEX}}"
+
+echo "${DYNAMIC_FLAG2}" > /root/host_flag.txt
 chmod 600 /root/host_flag.txt
 
 # 4. Synchronize assets and evidence directories
@@ -98,8 +104,14 @@ COPY pipeline_runner.sh /app/pipeline_runner.sh
 RUN chmod 755 /app/pipeline_runner.sh
 RUN addgroup -g 10001 -S cicdgroup && \
     adduser -u 10001 -S cicduser -G cicdgroup
-ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='FLAG{supply_chain_credential_leaked_proc_2026}' exec /app/pipeline_runner.sh"]
+ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='${DYNAMIC_FLAG1}' exec /app/pipeline_runner.sh"]
 EOF
+fi
+
+# Inject dynamic runtime flag into victim Dockerfile before building
+if [ -f "/assets/victim/Dockerfile" ]; then
+    sed -i "s|FLAG{DYNAMIC_RUNTIME_SECRET}|${DYNAMIC_FLAG1}|g" /assets/victim/Dockerfile
+    sed -i "s|FLAG{supply_chain_credential_leaked_proc_2026}|${DYNAMIC_FLAG1}|g" /assets/victim/Dockerfile
 fi
 
 # Fallback: Generate docker-compose.yml if missing
