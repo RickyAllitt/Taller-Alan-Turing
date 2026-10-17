@@ -44,8 +44,8 @@ function loadConfiguration() {
   if (savedUrl) activeConfig.databaseURL = savedUrl;
   if (savedWorkshop) activeConfig.workshopId = savedWorkshop;
 
-  elements.inputDbUrl.value = activeConfig.databaseURL;
-  elements.inputWorkshopId.value = activeConfig.workshopId;
+  if (elements.inputDbUrl) elements.inputDbUrl.value = activeConfig.databaseURL;
+  if (elements.inputWorkshopId) elements.inputWorkshopId.value = activeConfig.workshopId;
 }
 
 // Save configuration from modal
@@ -469,23 +469,33 @@ function setupEventListeners() {
     });
   });
 
-  // Settings Modal
-  elements.settingsBtn.addEventListener('click', () => {
-    elements.settingsModal.classList.add('active');
-  });
+  // Optional Admin Settings Modal (if present in DOM)
+  if (elements.settingsBtn && elements.settingsModal) {
+    elements.settingsBtn.addEventListener('click', () => {
+      elements.settingsModal.classList.add('active');
+    });
+  }
 
-  elements.closeModalBtn.addEventListener('click', () => {
-    elements.settingsModal.classList.remove('active');
-  });
+  if (elements.closeModalBtn && elements.settingsModal) {
+    elements.closeModalBtn.addEventListener('click', () => {
+      elements.settingsModal.classList.remove('active');
+    });
+  }
 
-  elements.cancelModalBtn.addEventListener('click', () => {
-    elements.settingsModal.classList.remove('active');
-  });
+  if (elements.cancelModalBtn && elements.settingsModal) {
+    elements.cancelModalBtn.addEventListener('click', () => {
+      elements.settingsModal.classList.remove('active');
+    });
+  }
 
-  elements.saveSettingsBtn.addEventListener('click', saveConfiguration);
+  if (elements.saveSettingsBtn) {
+    elements.saveSettingsBtn.addEventListener('click', saveConfiguration);
+  }
 
-  // Demo Data Preview
-  elements.demoDataBtn.addEventListener('click', loadDemoData);
+  // Optional Demo Data Preview (if present in DOM)
+  if (elements.demoDataBtn) {
+    elements.demoDataBtn.addEventListener('click', loadDemoData);
+  }
 }
 
 // Bootstrap

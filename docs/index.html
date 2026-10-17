@@ -32,12 +32,6 @@
           <span class="pulse-dot" id="pulse-dot"></span>
           <span id="status-text">Connecting...</span>
         </div>
-        <button class="btn btn-secondary" id="demo-data-btn" title="Toggle sample cohort data for presentation preview">
-          Preview Demo Data
-        </button>
-        <button class="btn btn-secondary" id="settings-btn" title="Configure Database Connection">
-          DB Settings
-        </button>
       </div>
     </header>
 
@@ -119,33 +113,7 @@
     </footer>
   </div>
 
-  <!-- Settings Modal Dialog -->
-  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-title-text">Telemetry & Database Configuration</h2>
-        <button class="modal-close" id="close-modal-btn" aria-label="Close modal">&times;</button>
-      </div>
-      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px;">
-        Connect this dashboard to your external Firebase Realtime Database. Real-time updates occur via Server-Sent Events (SSE).
-      </p>
 
-      <div class="form-group">
-        <label class="form-label" for="input-db-url">Firebase Database URL</label>
-        <input type="text" id="input-db-url" class="form-input" placeholder="https://PROJECT-ID-default-rtdb.firebaseio.com">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="input-workshop-id">Workshop Identifier</label>
-        <input type="text" id="input-workshop-id" class="form-input" placeholder="alan-turing-2026">
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
-        <button class="btn btn-primary" id="save-settings-btn">Save & Reconnect</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Core Logic Script (ES Module) -->
   <script type="module" src="app.js"></script>
