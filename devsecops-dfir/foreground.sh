@@ -62,13 +62,39 @@ done
 
 printf "\r${GREEN}[✔] Provisioning complete! All systems operational.                                     ${NC}\n\n"
 
-# Ensure score command alias exists
-[ -x "/usr/local/bin/score_client.sh" ] && ln -sfn /usr/local/bin/score_client.sh /usr/local/bin/score
+# Ensure score and hint command binaries exist in system PATH
+mkdir -p /usr/local/bin
+for candidate in \
+    "/usr/local/bin/score_client.sh" \
+    "/assets/scoring/score_client.sh" \
+    "/scoring/score_client.sh" \
+    "/root/assets/scoring/score_client.sh"; do
+    if [ -f "${candidate}" ]; then
+        cp -u "${candidate}" /usr/local/bin/score 2>/dev/null || cp "${candidate}" /usr/local/bin/score
+        cp -u "${candidate}" /usr/local/bin/score_client.sh 2>/dev/null || cp "${candidate}" /usr/local/bin/score_client.sh
+        chmod 755 /usr/local/bin/score /usr/local/bin/score_client.sh
+        break
+    fi
+done
+
+for candidate in \
+    "/usr/local/bin/hint" \
+    "/assets/scoring/hint.sh" \
+    "/scoring/hint.sh" \
+    "/root/assets/scoring/hint.sh"; do
+    if [ -f "${candidate}" ]; then
+        cp -u "${candidate}" /usr/local/bin/hint 2>/dev/null || cp "${candidate}" /usr/local/bin/hint
+        chmod 755 /usr/local/bin/hint
+        break
+    fi
+done
 
 # Operative Registration for Live Leaderboard & Points System
 if [ ! -f "/tmp/session_state.json" ]; then
     DEFAULT_ALIAS="operative-$RANDOM"
-    if [ -x "/usr/local/bin/score_client.sh" ]; then
+    if [ -x "/usr/local/bin/score" ]; then
+        /usr/local/bin/score init "${DEFAULT_ALIAS}" >/dev/null 2>&1
+    elif [ -x "/usr/local/bin/score_client.sh" ]; then
         /usr/local/bin/score_client.sh init "${DEFAULT_ALIAS}" >/dev/null 2>&1
     elif [ -f "/assets/scoring/score_client.sh" ]; then
         bash /assets/scoring/score_client.sh init "${DEFAULT_ALIAS}" >/dev/null 2>&1
@@ -77,17 +103,20 @@ fi
 
 STUDENT_ALIAS=$(jq -r '.alias' /tmp/session_state.json 2>/dev/null || echo "operative")
 
+echo ""
 echo -e "${BOLD}${CYAN}================================================================================${NC}"
 echo -e "${BOLD}${CYAN}                    CYBER RANGE SCOREBOARD REGISTRATION                         ${NC}"
 echo -e "${BOLD}${CYAN}================================================================================${NC}"
 echo -e "Initial handle assigned: ${BOLD}${GREEN}${STUDENT_ALIAS}${NC}"
-echo -e ""
+echo ""
 echo -e "To set your student name / call sign on the live cohort leaderboard, run:"
 echo -e "  ${BOLD}${YELLOW}score register <your_name>${NC}"
-echo -e ""
+echo ""
 echo -e "Example:  ${CYAN}score register alberto-sec${NC}"
-echo -e ""
+echo ""
 echo -e "Leaderboard: ${CYAN}https://rickyallitt.github.io/Taller-Alan-Turing${NC}"
 echo -e "Tactical Hints: Type '${YELLOW}hint <step>${NC}' (e.g. 'hint 1') for phased guidance."
-echo -e "${BOLD}${CYAN}================================================================================${NC}\n"
-echo -e "${BOLD}${GREEN}Environment ready. Follow the engagement guide on the left!${NC}\n"
+echo -e "${BOLD}${CYAN}================================================================================${NC}"
+echo ""
+echo -e "${BOLD}${GREEN}Environment ready. Follow the engagement guide on the left!${NC}"
+echo ""

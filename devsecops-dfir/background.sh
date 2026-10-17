@@ -168,21 +168,35 @@ for i in 1 2 3 4; do
 done
 
 # Install scoring and tactical hint utilities into system PATH
-mkdir -p /assets/scoring
-if [ -f "${SCRIPT_DIR}/assets/scoring/score_client.sh" ]; then
-    cp -ru "${SCRIPT_DIR}/assets/scoring/"* /assets/scoring/ 2>/dev/null || true
-fi
+mkdir -p /assets/scoring /usr/local/bin
+for src in \
+    "${SCRIPT_DIR}/scoring" \
+    "${SCRIPT_DIR}/assets/scoring" \
+    "/scoring" \
+    "/assets/scoring" \
+    "/root/assets/scoring"; do
+    if [ -d "${src}" ] && [ -f "${src}/score_client.sh" ]; then
+        cp -ru "${src}/"* /assets/scoring/ 2>/dev/null || true
+        break
+    fi
+done
 
-if [ -f "/assets/scoring/score_client.sh" ]; then
-    cp /assets/scoring/score_client.sh /usr/local/bin/score_client.sh
-    chmod 755 /usr/local/bin/score_client.sh
-    ln -sfn /usr/local/bin/score_client.sh /usr/local/bin/score
-fi
+for candidate in "/assets/scoring/score_client.sh" "${SCRIPT_DIR}/scoring/score_client.sh" "${SCRIPT_DIR}/assets/scoring/score_client.sh"; do
+    if [ -f "${candidate}" ]; then
+        cp "${candidate}" /usr/local/bin/score_client.sh
+        cp "${candidate}" /usr/local/bin/score
+        chmod 755 /usr/local/bin/score_client.sh /usr/local/bin/score
+        break
+    fi
+done
 
-if [ -f "/assets/scoring/hint.sh" ]; then
-    cp /assets/scoring/hint.sh /usr/local/bin/hint
-    chmod 755 /usr/local/bin/hint
-fi
+for candidate in "/assets/scoring/hint.sh" "${SCRIPT_DIR}/scoring/hint.sh" "${SCRIPT_DIR}/assets/scoring/hint.sh"; do
+    if [ -f "${candidate}" ]; then
+        cp "${candidate}" /usr/local/bin/hint
+        chmod 755 /usr/local/bin/hint
+        break
+    fi
+done
 
 # 5. Pre-pull alpine image to accelerate Challenge 2 breakout
 echo "[DOCKER] Pre-pulling alpine image..."
