@@ -1,0 +1,160 @@
+{
+  "title": "Parte 2: Container DFIR & Production Hardening (Defensiva)",
+  "description": "Fase defensiva del taller CPIFP Alan Turing: Triaje forense de almacenamiento OverlayFS, detección con reglas YARA y bastionado CIS Docker Benchmark.",
+  "difficulty": "Intermediate",
+  "time": "40 minutes",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "background.sh",
+      "foreground": "foreground.sh"
+    },
+    "steps": [
+      {
+        "title": "Desafío 3: Triaje Forense (DFIR) y Detección con Reglas YARA",
+        "text": "step3.md",
+        "verify": "step3/verify.sh"
+      },
+      {
+        "title": "Desafío 4: Bastionado de Producción y Validación Empírica (DevSecOps)",
+        "text": "step4.md",
+        "verify": "step4/verify.sh"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "assets": {
+    "host01": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ],
+    "host0": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ]
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  },
+  "interface": {
+    "layout": "split"
+  }
+}

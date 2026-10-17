@@ -153,9 +153,10 @@ complete_challenge() {
     # Step 4: Tier 1: 30, Tier 2: 60
     local penalty=0
     local hints_taken
-    hints_taken=$(jq -c ".challenges.${step_key}.hintsTaken" "${STATE_FILE}" 2>/dev/null || echo "[]")
+    hints_taken=$(jq -c ".challenges.${step_key}.hintsTaken // []" "${STATE_FILE}" 2>/dev/null)
+    [ -z "${hints_taken}" ] || [ "${hints_taken}" = "null" ] && hints_taken="[]"
 
-    for tier in $(echo "${hints_taken}" | jq -r '.[]'); do
+    for tier in $(echo "${hints_taken}" | jq -r '.[]?' 2>/dev/null); do
         case "${step_num}_${tier}" in
             "1_1") penalty=$((penalty + 25)) ;;
             "1_2") penalty=$((penalty + 50)) ;;
@@ -228,6 +229,45 @@ register_alias() {
         old_score=$(jq -r '.totalScore // 0' "${STATE_FILE}" 2>/dev/null)
     fi
 
+    # If the local session has 0 score, check if a previous session exists in Firebase for this alias
+    if [ "${old_score}" -eq 0 ]; then
+        local existing_match
+        existing_match=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
+            jq -c --arg a "${new_alias}" 'to_entries | map(select(.value.alias == $a and (.value.totalScore // 0) > 0)) | sort_by(.value.totalScore) | reverse | .[0] // empty' 2>/dev/null)
+
+        if [ -n "${existing_match}" ] && [ "${existing_match}" != "null" ]; then
+            local existing_id
+            existing_id=$(echo "${existing_match}" | jq -r '.key')
+            local existing_val
+            existing_val=$(echo "${existing_match}" | jq -c '.value')
+
+            if [ -n "${existing_id}" ] && [ "${existing_id}" != "null" ]; then
+                # Delete temporary auto-generated session node if different
+                if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${existing_id}" ]; then
+                    local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${old_student_id}.json"
+                    curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
+                fi
+
+                echo "${existing_val}" | jq '.' > "${STATE_FILE}"
+                chmod 666 "${STATE_FILE}" 2>/dev/null || true
+
+                local cur_score
+                cur_score=$(jq -r '.totalScore // 0' "${STATE_FILE}")
+                local cur_done
+                cur_done=$(jq -r '.completedChallenges // 0' "${STATE_FILE}")
+
+                echo ""
+                echo -e "\033[1;32m======================================================================\033[0m"
+                echo -e "\033[1;32m[✔] ¡Sesión anterior vinculada para: ${new_alias}!\033[0m"
+                echo -e "\033[1;36m[✔] Progreso recuperado: ${cur_score}/1000 pts | Desafíos completados: ${cur_done}/4\033[0m"
+                echo -e "\033[1;36m[ℹ] Marcador en Vivo: ${LEADERBOARD_URL}\033[0m"
+                echo -e "\033[1;32m======================================================================\033[0m"
+                echo ""
+                return 0
+            fi
+        fi
+    fi
+
     local rand_suffix
     rand_suffix=$(head -c 3 /dev/urandom | xxd -p 2>/dev/null || echo "$RANDOM")
     local new_student_id="student_${new_alias}_${rand_suffix}"
@@ -272,7 +312,7 @@ case "${ACTION}" in
     init)
         init_session "$2"
         ;;
-    register|alias)
+    register|alias|resume)
         register_alias "$2"
         ;;
     hint)
@@ -291,6 +331,6 @@ case "${ACTION}" in
         show_status
         ;;
     *)
-        echo "Usage: score {register <name> | status | hint <step>}"
+        echo "Usage: score {register <name> | resume <name> | status | hint <step>}"
         ;;
 esac

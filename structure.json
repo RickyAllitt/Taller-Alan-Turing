@@ -1,9 +1,12 @@
 [
     {
-        "title": "DevSecOps & DFIR",
+        "title": "Taller Alan Turing: DevSecOps y DFIR en Contenedores",
         "scenarios": [
             {
-                "path": "devsecops-dfir"
+                "path": "devsecops-dfir-part1"
+            },
+            {
+                "path": "devsecops-dfir-part2"
             }
         ]
     }

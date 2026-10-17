@@ -1,0 +1,160 @@
+{
+  "title": "Parte 1: Cadena de Suministro y Fuga de Contenedor (Ofensiva)",
+  "description": "Fase ofensiva del taller CPIFP Alan Turing: Envenenamiento de pipelines CI/CD, extracción de credenciales en memoria de procesos y escape de contenedor vía Docker socket.",
+  "difficulty": "Intermediate",
+  "time": "35 minutes",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "background.sh",
+      "foreground": "foreground.sh"
+    },
+    "steps": [
+      {
+        "title": "Desafío 1: Envenenamiento de Pipeline y Extracción de Secretos en Memoria",
+        "text": "step1.md",
+        "verify": "step1/verify.sh"
+      },
+      {
+        "title": "Desafío 2: Fuga de Contenedor mediante Socket de Docker",
+        "text": "step2.md",
+        "verify": "step2/verify.sh"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "assets": {
+    "host01": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ],
+    "host0": [
+      {
+        "file": "docker-compose.yml",
+        "target": "/assets/",
+        "chmod": "+rw"
+      },
+      {
+        "file": "victim/Dockerfile",
+        "target": "/assets/victim/",
+        "chmod": "+r"
+      },
+      {
+        "file": "victim/pipeline_runner.sh",
+        "target": "/assets/victim/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "evidence/backdoor_implant.sh",
+        "target": "/assets/evidence/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step1/verify.sh",
+        "target": "/step1/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step2/verify.sh",
+        "target": "/step2/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step3/verify.sh",
+        "target": "/step3/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step4/verify.sh",
+        "target": "/step4/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ]
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  },
+  "interface": {
+    "layout": "split"
+  }
+}
