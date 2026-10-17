@@ -54,7 +54,7 @@ El panel de clasificación en tiempo real se encuentra en la carpeta [`docs/`](d
            "students": {
              "$student_id": {
                ".write": true,
-               ".validate": "newData.hasChildren(['alias', 'registeredAt', 'totalScore']) && newData.child('totalScore').isNumber() && newData.child('totalScore').val() >= 0 && newData.child('totalScore').val() <= 1000"
+               ".validate": "newData.hasChildren(['alias', 'registeredAt', 'totalScore']) && newData.child('alias').isString() && newData.child('alias').val().length >= 2 && newData.child('alias').val().length <= 25 && newData.child('totalScore').isNumber() && newData.child('totalScore').val() >= 0 && newData.child('totalScore').val() <= 1000 && (!data.exists() || newData.child('alias').val() == data.child('alias').val()) && (!data.exists() || newData.child('totalScore').val() >= data.child('totalScore').val())"
              }
            }
          }
