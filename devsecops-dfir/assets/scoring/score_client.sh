@@ -206,11 +206,57 @@ complete_challenge() {
     echo ""
 }
 
+register_alias() {
+    local new_alias="${1:-}"
+    if [ -z "${new_alias}" ]; then
+        echo -e "\033[1;33mUsage: score register <your_call_sign>\033[0m"
+        echo -e "Example: score register alberto-sec"
+        return 1
+    fi
+
+    # Sanitize alias: alphanumeric, hyphens, underscores only (2-20 characters)
+    new_alias=$(echo "${new_alias}" | tr -cd 'a-zA-Z0-9_-' | cut -c 1-20)
+    if [ ${#new_alias} -lt 2 ]; then
+        echo -e "\033[1;31m[ERROR] Call sign must be between 2 and 20 alphanumeric characters.\033[0m"
+        return 1
+    fi
+
+    if [ -f "${STATE_FILE}" ]; then
+        local tmp_json
+        tmp_json=$(jq --arg a "${new_alias}" '.alias = $a' "${STATE_FILE}")
+        echo "${tmp_json}" > "${STATE_FILE}"
+    else
+        init_session "${new_alias}"
+    fi
+
+    sync_to_firebase
+
+    echo ""
+    echo -e "\033[1;32m======================================================================\033[0m"
+    echo -e "\033[1;32m[✔] Scoreboard Call Sign registered: ${new_alias}\033[0m"
+    echo -e "\033[1;36m[ℹ] Live Leaderboard: ${LEADERBOARD_URL}\033[0m"
+    echo -e "\033[1;32m======================================================================\033[0m"
+    echo ""
+}
+
+show_status() {
+    ensure_session
+    local a s c
+    a=$(jq -r '.alias' "${STATE_FILE}")
+    s=$(jq -r '.totalScore' "${STATE_FILE}")
+    c=$(jq -r '.completedChallenges' "${STATE_FILE}")
+    echo -e "\033[1;36m[OPERATIVE] ${a} | Score: ${s}/1000 pts | Solved: ${c}/4 Challenges\033[0m"
+    echo -e "\033[1;33m[LEADERBOARD] ${LEADERBOARD_URL}\033[0m"
+}
+
 # Command dispatch for CLI usage: score_client.sh <action> [args...]
 ACTION="${1:-}"
 case "${ACTION}" in
     init)
         init_session "$2"
+        ;;
+    register|alias)
+        register_alias "$2"
         ;;
     hint)
         record_hint "$2" "$3" "$4"
@@ -222,7 +268,9 @@ case "${ACTION}" in
         sync_to_firebase
         ;;
     status)
-        ensure_session
-        cat "${STATE_FILE}"
+        show_status
+        ;;
+    *)
+        echo "Usage: score {register <name> | status | hint <step>}"
         ;;
 esac

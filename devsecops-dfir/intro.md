@@ -46,22 +46,22 @@ The 75-minute engagement is partitioned into four sequential operational phases 
 | **Challenge 4** | CIS Hardening & Empirical Validation | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
 
 ### Operative Call Sign & Scoreboard Registration
-During scenario initialization in the right-hand terminal, an interactive registration prompt will appear once background provisioning completes:
+At startup, your terminal automatically provisions an initial operative call sign (e.g., `operative-4821`).
 
-```text
-================================================================================
-                   CYBER RANGE OPERATIVE REGISTRATION                           
-================================================================================
-Enter your Operative Call Sign / Student Alias to track your progress and score
-on the live cohort leaderboard.
+To customize your operative handle on the live cohort scoreboard, run the following command in your terminal:
 
-Operative Call Sign [default: operative-XXXXX]:
+```bash
+score register <your_call_sign>
 ```
 
-- **Identifier Selection:** Enter a distinctive handle or student call sign (2 to 20 characters, containing alphanumeric characters, hyphens, or underscores, e.g., `alberto-sec`, `ciber-09`).
-- **Default Assignment:** Pressing `Enter` without input automatically provisions a randomized handle (`operative-$RANDOM`).
-- **Telemetry Correlation:** Your call sign will identify your progress, completion timestamps (Spanish local time / CET), hint deductions, and First Blood recognitions on the public cohort scoreboard.
-- **Session Locking:** To prevent session collisions or score spoofing, your call sign is immutable for the duration of the 75-minute lab run.
+Example:
+```bash
+score register alberto-sec
+```
+
+- **Naming Requirements:** 2 to 20 characters (alphanumeric, hyphens, and underscores).
+- **Telemetry Correlation:** Your call sign displays your score, completion timestamps (Spanish local time / CET), hint deductions, and First Blood recognitions on the scoreboard.
+- **Status Check:** Execute `score status` at any point during the engagement to inspect your active telemetry state and current points.
 
 ### Tactical Hint System
 If you encounter an operational impasse during any challenge, tactical guidance can be requested via the terminal command:

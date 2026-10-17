@@ -176,6 +176,7 @@ fi
 if [ -f "/assets/scoring/score_client.sh" ]; then
     cp /assets/scoring/score_client.sh /usr/local/bin/score_client.sh
     chmod 755 /usr/local/bin/score_client.sh
+    ln -sfn /usr/local/bin/score_client.sh /usr/local/bin/score
 fi
 
 if [ -f "/assets/scoring/hint.sh" ]; then
