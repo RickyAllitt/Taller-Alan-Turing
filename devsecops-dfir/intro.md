@@ -45,6 +45,24 @@ The 75-minute engagement is partitioned into four sequential operational phases 
 | **Challenge 3** | OverlayFS Triage & YARA Authoring | 20 - 23 min | 300 pts | Tier 1: -25 pts &bull; Tier 2: -50 pts &bull; Tier 3: -75 pts |
 | **Challenge 4** | CIS Hardening & Empirical Validation | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
 
+### Operative Call Sign & Scoreboard Registration
+During scenario initialization in the right-hand terminal, an interactive registration prompt will appear once background provisioning completes:
+
+```text
+================================================================================
+                   CYBER RANGE OPERATIVE REGISTRATION                           
+================================================================================
+Enter your Operative Call Sign / Student Alias to track your progress and score
+on the live cohort leaderboard.
+
+Operative Call Sign [default: operative-XXXXX]:
+```
+
+- **Identifier Selection:** Enter a distinctive handle or student call sign (2 to 20 characters, containing alphanumeric characters, hyphens, or underscores, e.g., `alberto-sec`, `ciber-09`).
+- **Default Assignment:** Pressing `Enter` without input automatically provisions a randomized handle (`operative-$RANDOM`).
+- **Telemetry Correlation:** Your call sign will identify your progress, completion timestamps (Spanish local time / CET), hint deductions, and First Blood recognitions on the public cohort scoreboard.
+- **Session Locking:** To prevent session collisions or score spoofing, your call sign is immutable for the duration of the 75-minute lab run.
+
 ### Tactical Hint System
 If you encounter an operational impasse during any challenge, tactical guidance can be requested via the terminal command:
 
