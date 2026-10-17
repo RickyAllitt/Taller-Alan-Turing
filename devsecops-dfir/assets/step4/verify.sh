@@ -103,6 +103,11 @@ fi
 echo ""
 if [ ${FAILED_CHECKS} -eq 0 ]; then
     echo -e "${GREEN}${BOLD}[✔] All mandatory DevSecOps hardening controls PASSED successfully!${NC}"
+    if [ -x "/usr/local/bin/score_client.sh" ]; then
+        /usr/local/bin/score_client.sh complete 4 250
+    elif [ -f "/assets/scoring/score_client.sh" ]; then
+        bash /assets/scoring/score_client.sh complete 4 250
+    fi
     exit 0
 else
     echo -e "${RED}${BOLD}[FAIL] ${FAILED_CHECKS} security control(s) failed validation. Review the recommendations above.${NC}"

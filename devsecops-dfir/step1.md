@@ -66,3 +66,5 @@ Ensure `/tmp/flag1.txt` exists on the host and contains the exact flag string. T
 ```bash
 /step1/verify.sh
 ```
+
+Upon successful validation, **200 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 1` for tactical guidance.

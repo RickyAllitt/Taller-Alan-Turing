@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "workshops": {
+      "$workshop_id": {
+        ".read": true,
+        "students": {
+          "$student_id": {
+            ".write": true,
+            ".validate": "newData.hasChildren(['alias', 'registeredAt', 'totalScore']) && newData.child('totalScore').isNumber() && newData.child('totalScore').val() >= 0 && newData.child('totalScore').val() <= 1000"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ==============================================================================
-# Killercoda Foreground Script
+# Killercoda Foreground Script with Cyber Range Registration
 # DevSecOps & Container DFIR Workshop - CPIFP Alan Turing
 # ==============================================================================
 
@@ -61,4 +61,28 @@ while [ ! -f /tmp/killercoda_ready ]; do
 done
 
 printf "\r${GREEN}[✔] Provisioning complete! All systems operational.                                     ${NC}\n\n"
+
+# Operative Registration for Live Leaderboard & Points System
+if [ ! -f "/tmp/session_state.json" ]; then
+    echo -e "${BOLD}${CYAN}================================================================================${NC}"
+    echo -e "${BOLD}${CYAN}                   CYBER RANGE OPERATIVE REGISTRATION                           ${NC}"
+    echo -e "${BOLD}${CYAN}================================================================================${NC}"
+    echo -e "Enter your Operative Call Sign / Student Alias to track your progress and score"
+    echo -e "on the live cohort leaderboard."
+    echo ""
+    read -r -p "Operative Call Sign [default: operative-$RANDOM]: " USER_ALIAS
+    [ -z "${USER_ALIAS}" ] && USER_ALIAS="operative-$RANDOM"
+
+    if [ -x "/usr/local/bin/score_client.sh" ]; then
+        /usr/local/bin/score_client.sh init "${USER_ALIAS}"
+    elif [ -f "/assets/scoring/score_client.sh" ]; then
+        bash /assets/scoring/score_client.sh init "${USER_ALIAS}"
+    fi
+fi
+
+STUDENT_ALIAS=$(jq -r '.alias' /tmp/session_state.json 2>/dev/null || echo "operative")
+echo ""
+echo -e "${GREEN}[✔] Operative '${BOLD}${STUDENT_ALIAS}${NC}${GREEN}' registered successfully.${NC}"
+echo -e "${CYAN}[ℹ] Starting Balance: 0 / 1000 pts (Live Scoreboard: https://rickyallitt.github.io/Taller-Alan-Turing)${NC}"
+echo -e "${YELLOW}[ℹ] Tactical Hints: Type 'hint <step>' (e.g., 'hint 1') if you require guidance.${NC}\n"
 echo -e "${BOLD}${GREEN}Environment ready. Follow the guide on the left!${NC}\n"

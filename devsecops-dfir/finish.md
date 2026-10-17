@@ -52,3 +52,12 @@ For formal compliance specifications and architectural reference models:
 - **Open Source Security Foundation (OpenSSF)**: [Supply-chain Levels for Software Artifacts (SLSA v1.0)](https://slsa.dev/)
 - **MITRE ATT&CK Matrix for Enterprise**: [Container Threat Model](https://attack.mitre.org/matrices/enterprise/containers/)
 - **Cloud Native Computing Foundation (CNCF)**: [Cloud Native Security Whitepaper v2](https://github.com/cncf/tag-security/blob/main/security-whitepaper/cloud-native-security-whitepaper.md)
+
+---
+
+## Cyber Range Extraction & Cohort Leaderboard
+
+Your final challenge results and telemetry have been recorded in the central scoring system.
+- Base Performance Score: 1,000 Points Max
+- Final standings, completion timestamps (Spanish local time), and peer speed metrics are published on the live scoreboard:
+  **https://rickyallitt.github.io/Taller-Alan-Turing**

@@ -74,4 +74,9 @@ fi
 echo -e "${GREEN}[PASS] Challenge 3 Complete!${NC}"
 echo -e "${GREEN}[✔] YARA Rule successfully matched malicious artifact:${NC}"
 echo -e "${CYAN}${YARA_OUTPUT}${NC}"
+if [ -x "/usr/local/bin/score_client.sh" ]; then
+    /usr/local/bin/score_client.sh complete 3 300
+elif [ -f "/assets/scoring/score_client.sh" ]; then
+    bash /assets/scoring/score_client.sh complete 3 300
+fi
 exit 0

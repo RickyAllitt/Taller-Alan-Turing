@@ -109,3 +109,5 @@ Ensure your completed YARA rule is saved at `/evidence/detect_implant.yar`. Trig
 ```bash
 /step3/verify.sh
 ```
+
+Upon successful validation, **300 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 3` for tactical guidance.

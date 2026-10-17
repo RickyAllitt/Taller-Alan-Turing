@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPIFP Alan Turing - DevSecOps & Container DFIR | Live Cyber Range Leaderboard</title>
+  <meta name="description" content="Live Real-time Leaderboard for the DevSecOps and Container DFIR hands-on scenario at CPIFP Alan Turing.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="app-wrapper">
+    <!-- Header Navigation -->
+    <header class="header-bar">
+      <div class="brand-section">
+        <div class="brand-logo-badge">AT-RANGE</div>
+        <div class="brand-titles">
+          <h1>DevSecOps & DFIR Cyber Range</h1>
+          <p>CPIFP Alan Turing &bull; Curso de Especialización en Ciberseguridad &bull; Málaga</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-pill" id="connection-status">
+          <span class="pulse-dot" id="pulse-dot"></span>
+          <span id="status-text">Connecting...</span>
+        </div>
+        <button class="btn btn-secondary" id="demo-data-btn" title="Toggle sample cohort data for presentation preview">
+          Preview Demo Data
+        </button>
+        <button class="btn btn-secondary" id="settings-btn" title="Configure Database Connection">
+          DB Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- Metrics Cards Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card" style="--card-accent: var(--accent-cyan);">
+        <div class="metric-label">Active Operatives</div>
+        <div class="metric-value" id="metric-operatives">0</div>
+        <div class="metric-subtext">Registered in cohort</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-green);">
+        <div class="metric-label">Top Score</div>
+        <div class="metric-value" id="metric-top-score">0</div>
+        <div class="metric-subtext">Max available: 1,000 pts</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-amber);">
+        <div class="metric-label">Cohort Average</div>
+        <div class="metric-value" id="metric-avg-score">0</div>
+        <div class="metric-subtext">Mean performance points</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-purple);">
+        <div class="metric-label">Extractions Completed</div>
+        <div class="metric-value" id="metric-completed">0</div>
+        <div class="metric-subtext">All 4 challenges passed</div>
+      </div>
+    </section>
+
+    <!-- First Blood / Fastest Solvers Showcase -->
+    <section class="showcase-container">
+      <div class="section-header">
+        <div class="section-title">
+          <span>First Blood &bull; Fastest Solvers (Spanish Local Time)</span>
+        </div>
+      </div>
+      <div class="first-blood-grid" id="first-blood-grid">
+        <!-- Rendered dynamically via app.js -->
+      </div>
+    </section>
+
+    <!-- Search & Filter Controls -->
+    <section class="controls-bar">
+      <div class="search-box">
+        <span class="search-icon">&gt;</span>
+        <input type="text" id="search-input" placeholder="Filter by operative call sign...">
+      </div>
+
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-status="all">All Operatives</button>
+        <button class="filter-btn" data-status="in_progress">In Progress</button>
+        <button class="filter-btn" data-status="completed">Completed (4/4)</button>
+      </div>
+    </section>
+
+    <!-- Live Leaderboard Table -->
+    <main class="table-container">
+      <table aria-label="Cyber Range Leaderboard Table">
+        <thead>
+          <tr>
+            <th style="width: 70px;">Rank</th>
+            <th>Operative Call Sign</th>
+            <th style="width: 170px;">Total Score</th>
+            <th>Challenge Breakdown</th>
+            <th style="width: 120px;">Hints</th>
+            <th>Last Activity</th>
+            <th style="width: 130px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <!-- Dynamically populated via app.js -->
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        CPIFP Alan Turing &bull; DevSecOps & Container DFIR Hands-On Range &bull;
+        <a href="https://github.com/RickyAllitt/Taller-Alan-Turing" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- Settings Modal Dialog -->
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title-text">Telemetry & Database Configuration</h2>
+        <button class="modal-close" id="close-modal-btn" aria-label="Close modal">&times;</button>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px;">
+        Connect this dashboard to your external Firebase Realtime Database. Real-time updates occur via Server-Sent Events (SSE).
+      </p>
+
+      <div class="form-group">
+        <label class="form-label" for="input-db-url">Firebase Database URL</label>
+        <input type="text" id="input-db-url" class="form-input" placeholder="https://PROJECT-ID-default-rtdb.firebaseio.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-workshop-id">Workshop Identifier</label>
+        <input type="text" id="input-workshop-id" class="form-input" placeholder="alan-turing-2026">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancel-modal-btn">Cancel</button>
+        <button class="btn btn-primary" id="save-settings-btn">Save & Reconnect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Logic Script (ES Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

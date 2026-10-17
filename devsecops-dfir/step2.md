@@ -69,3 +69,5 @@ Ensure `/tmp/flag2.txt` contains the host flag string. Run the verification harn
 ```bash
 /step2/verify.sh
 ```
+
+Upon successful validation, **250 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 2` for tactical guidance.

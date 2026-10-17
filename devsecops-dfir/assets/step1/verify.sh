@@ -23,6 +23,11 @@ SUBMITTED_FLAG=$(grep -o "FLAG{[^}]*}" "${FLAG_FILE}" 2>/dev/null || cat "${FLAG
 if [ "${SUBMITTED_FLAG}" = "${EXPECTED_FLAG}" ]; then
     echo -e "${GREEN}[PASS] Challenge 1 Complete!${NC}"
     echo -e "${GREEN}[✔] Successfully harvested pipeline secret from /proc/1/environ: ${EXPECTED_FLAG}${NC}"
+    if [ -x "/usr/local/bin/score_client.sh" ]; then
+        /usr/local/bin/score_client.sh complete 1 200
+    elif [ -f "/assets/scoring/score_client.sh" ]; then
+        bash /assets/scoring/score_client.sh complete 1 200
+    fi
     exit 0
 else
     echo -e "${RED}[FAIL] Incorrect flag in ${FLAG_FILE}${NC}"

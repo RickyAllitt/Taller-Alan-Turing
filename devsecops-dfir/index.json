@@ -81,6 +81,21 @@
         "file": "step4/verify.sh",
         "target": "/step4/",
         "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
       }
     ],
     "host0": [
@@ -128,6 +143,21 @@
         "file": "step4/verify.sh",
         "target": "/step4/",
         "chmod": "+x"
+      },
+      {
+        "file": "scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
       }
     ]
   },

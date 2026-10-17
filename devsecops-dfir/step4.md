@@ -116,3 +116,5 @@ Confirm that `/assets/docker-compose.hardened.yml` exists and that `cicd_runner_
 ```bash
 /step4/verify.sh
 ```
+
+Upon successful validation, **250 Base Points** (minus any consumed hints) will be awarded and synchronized to the live scoreboard. If you reach an impasse, execute `hint 4` for tactical guidance.

@@ -155,6 +155,22 @@ for i in 1 2 3 4; do
     chmod +x "/step${i}/verify.sh" 2>/dev/null || true
 done
 
+# Install scoring and tactical hint utilities into system PATH
+mkdir -p /assets/scoring
+if [ -f "${SCRIPT_DIR}/assets/scoring/score_client.sh" ]; then
+    cp -ru "${SCRIPT_DIR}/assets/scoring/"* /assets/scoring/ 2>/dev/null || true
+fi
+
+if [ -f "/assets/scoring/score_client.sh" ]; then
+    cp /assets/scoring/score_client.sh /usr/local/bin/score_client.sh
+    chmod 755 /usr/local/bin/score_client.sh
+fi
+
+if [ -f "/assets/scoring/hint.sh" ]; then
+    cp /assets/scoring/hint.sh /usr/local/bin/hint
+    chmod 755 /usr/local/bin/hint
+fi
+
 # 5. Pre-pull alpine image to accelerate Challenge 2 breakout
 echo "[DOCKER] Pre-pulling alpine image..."
 docker pull alpine:3.19 || docker pull alpine:latest || true

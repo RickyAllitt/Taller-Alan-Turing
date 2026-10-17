@@ -34,16 +34,29 @@ This operational engagement requires you to perform offensive reconstruction, di
 
 ---
 
-## Operational Roadmap & Time Allocation
+## Operational Roadmap & Scoring Economy
 
-The 75-minute engagement is partitioned into four sequential operational phases:
+The 75-minute engagement is partitioned into four sequential operational phases evaluated on a **1,000 Base Points** scale. Completion timestamps are recorded in Spanish local time (AM/PM) and synchronized in real time to the cohort scoreboard.
 
-| Phase | Technical Focus | Core Framework | Time Budget |
-| :--- | :--- | :--- | :--- |
-| **Challenge 1** | In-Memory Credential Harvesting | MITRE ATT&CK T1195.002 | 12 - 15 min |
-| **Challenge 2** | UNIX Domain Socket Breakout | MITRE ATT&CK T1611 | 15 - 18 min |
-| **Challenge 3** | OverlayFS Triage & YARA Authoring | SANS / DFIR Methodology | 20 - 23 min |
-| **Challenge 4** | CIS Hardening & Empirical Validation | CIS Docker Benchmark v1.6.0 | 15 - 18 min |
+| Phase | Technical Focus | Time Budget | Base Score | Tactical Hints Penalty |
+| :--- | :--- | :---: | :---: | :--- |
+| **Challenge 1** | In-Memory Credential Harvesting | 12 - 15 min | 200 pts | Tier 1: -25 pts &bull; Tier 2: -50 pts |
+| **Challenge 2** | UNIX Domain Socket Breakout | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
+| **Challenge 3** | OverlayFS Triage & YARA Authoring | 20 - 23 min | 300 pts | Tier 1: -25 pts &bull; Tier 2: -50 pts &bull; Tier 3: -75 pts |
+| **Challenge 4** | CIS Hardening & Empirical Validation | 15 - 18 min | 250 pts | Tier 1: -30 pts &bull; Tier 2: -60 pts |
+
+### Tactical Hint System
+If you encounter an operational impasse during any challenge, tactical guidance can be requested via the terminal command:
+
+```bash
+hint <step_number>
+```
+
+Example: `hint 1` displays available tiers and point costs before confirming deduction. Unlocking hints deducts points from that challenge's base score upon successful verification.
+
+### Live Cohort Leaderboard
+Track your real-time ranking, completion times, and peer standings at:
+**https://rickyallitt.github.io/Taller-Alan-Turing**
 
 ---
 
