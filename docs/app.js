@@ -120,10 +120,21 @@ function connectRealtime() {
         if (payload.path === '/') {
           studentsData = payload.data || {};
         } else if (payload.path) {
-          const studentKey = payload.path.replace(/^\//, '').split('/')[0];
-          if (!studentsData[studentKey]) studentsData[studentKey] = {};
-          if (payload.data !== null && payload.data !== undefined) {
-            Object.assign(studentsData[studentKey], payload.data);
+          const parts = payload.path.replace(/^\//, '').split('/');
+          const studentKey = parts[0];
+          if (payload.data === null) {
+            if (parts.length === 1) {
+              delete studentsData[studentKey];
+            } else if (studentsData[studentKey]) {
+              delete studentsData[studentKey][parts[1]];
+            }
+          } else {
+            if (!studentsData[studentKey]) studentsData[studentKey] = {};
+            if (parts.length === 1) {
+              studentsData[studentKey] = payload.data;
+            } else {
+              studentsData[studentKey][parts[1]] = payload.data;
+            }
           }
         }
         setConnectionState('connected', 'Connected');
@@ -137,7 +148,13 @@ function connectRealtime() {
       try {
         const payload = JSON.parse(e.data);
         if (payload.data) {
-          Object.assign(studentsData, payload.data);
+          Object.keys(payload.data).forEach((k) => {
+            if (payload.data[k] === null) {
+              delete studentsData[k];
+            } else {
+              studentsData[k] = Object.assign(studentsData[k] || {}, payload.data[k]);
+            }
+          });
         }
         setConnectionState('connected', 'Connected');
         renderDashboard();
@@ -193,7 +210,9 @@ function restartConnection() {
 function processStudents() {
   if (!studentsData || typeof studentsData !== 'object') return [];
 
-  const list = Object.keys(studentsData).map((key) => {
+  const list = Object.keys(studentsData)
+    .filter((key) => studentsData[key] && typeof studentsData[key] === 'object' && studentsData[key].alias)
+    .map((key) => {
     const item = studentsData[key];
     const ch = item.challenges || {};
 

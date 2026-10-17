@@ -240,10 +240,10 @@ register_alias() {
         init_session "${new_alias}"
     fi
 
-    # Delete previous node if it had 0 points (e.g. replacing auto-generated operative-XXXXX)
-    if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${new_student_id}" ] && [ "${old_score}" -eq 0 ]; then
+    # Delete previous node from Firebase so operative does not appear duplicated on scoreboard
+    if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${new_student_id}" ]; then
         local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${old_student_id}.json"
-        curl -s -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
+        curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
     fi
 
     sync_to_firebase
