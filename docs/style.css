@@ -150,6 +150,12 @@ body::before {
   animation: pulse-animation 2s infinite;
 }
 
+.pulse-dot.connecting {
+  background-color: var(--accent-amber);
+  box-shadow: 0 0 8px var(--accent-amber);
+  animation: pulse-animation 1s infinite;
+}
+
 .pulse-dot.offline {
   background-color: var(--accent-red);
   box-shadow: 0 0 8px var(--accent-red);

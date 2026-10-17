@@ -68,42 +68,65 @@ function saveConfiguration() {
 
 // Update connection status pill
 function setConnectionState(state, message) {
-  if (state === 'live') {
+  if (state === 'connected' || state === 'live') {
     elements.pulseDot.className = 'pulse-dot';
-    elements.statusText.textContent = message || 'Live WebSocket';
-  } else if (state === 'syncing') {
-    elements.pulseDot.className = 'pulse-dot';
-    elements.statusText.textContent = message || 'Polling Active';
+    elements.statusText.textContent = 'Connected';
+  } else if (state === 'connecting') {
+    elements.pulseDot.className = 'pulse-dot connecting';
+    elements.statusText.textContent = 'Connecting...';
   } else {
     elements.pulseDot.className = 'pulse-dot offline';
-    elements.statusText.textContent = message || 'Offline / Standby';
+    elements.statusText.textContent = 'Disconnected';
   }
 }
 
-// Connect to Firebase Realtime Database using Server-Sent Events (SSE)
+// Connect to Firebase Realtime Database using Server-Sent Events (SSE) with HTTP verification
 function connectRealtime() {
   if (eventSource) {
     eventSource.close();
   }
 
+  setConnectionState('connecting', 'Connecting...');
+
   const cleanUrl = activeConfig.databaseURL.replace(/\/$/, '');
-  const sseEndpoint = `${cleanUrl}/workshops/${activeConfig.workshopId}/students.json`;
+  const studentsEndpoint = `${cleanUrl}/workshops/${activeConfig.workshopId}/students.json`;
+
+  // Quick HTTP handshake verification to immediately confirm connectivity
+  fetch(studentsEndpoint, { cache: 'no-store' })
+    .then(async (resp) => {
+      if (resp.ok) {
+        const data = await resp.json();
+        studentsData = data || {};
+        setConnectionState('connected', 'Connected');
+        renderDashboard();
+      } else {
+        setConnectionState('disconnected', 'Disconnected');
+      }
+    })
+    .catch(() => {
+      setConnectionState('disconnected', 'Disconnected');
+    });
 
   try {
-    eventSource = new EventSource(sseEndpoint);
+    eventSource = new EventSource(studentsEndpoint);
+
+    eventSource.onopen = () => {
+      setConnectionState('connected', 'Connected');
+    };
 
     eventSource.addEventListener('put', (e) => {
       try {
         const payload = JSON.parse(e.data);
-        if (payload.path === '/' && payload.data) {
-          studentsData = payload.data;
-        } else if (payload.path && payload.path !== '/') {
+        if (payload.path === '/') {
+          studentsData = payload.data || {};
+        } else if (payload.path) {
           const studentKey = payload.path.replace(/^\//, '').split('/')[0];
           if (!studentsData[studentKey]) studentsData[studentKey] = {};
-          // Merge partial updates
-          Object.assign(studentsData[studentKey], payload.data);
+          if (payload.data !== null && payload.data !== undefined) {
+            Object.assign(studentsData[studentKey], payload.data);
+          }
         }
-        setConnectionState('live', 'Live RTDB');
+        setConnectionState('connected', 'Connected');
         renderDashboard();
       } catch (err) {
         console.error('SSE JSON parse error:', err);
@@ -116,7 +139,7 @@ function connectRealtime() {
         if (payload.data) {
           Object.assign(studentsData, payload.data);
         }
-        setConnectionState('live', 'Live RTDB');
+        setConnectionState('connected', 'Connected');
         renderDashboard();
       } catch (err) {
         console.error('SSE patch error:', err);
@@ -124,18 +147,16 @@ function connectRealtime() {
     });
 
     eventSource.onerror = () => {
-      setConnectionState('syncing', 'Fallback Polling');
+      // If SSE disconnects or encounters an error, verify via fallback polling
       fallbackPoll();
     };
-
-    setConnectionState('live', 'Connecting...');
   } catch (err) {
     console.warn('EventSource initialization failed, using polling:', err);
     fallbackPoll();
   }
 }
 
-// Fallback HTTP polling if SSE is restricted by CORS or environment
+// Fallback HTTP polling if SSE is restricted or disconnected
 async function fallbackPoll() {
   if (pollTimer) clearInterval(pollTimer);
 
@@ -147,16 +168,14 @@ async function fallbackPoll() {
       });
       if (resp.ok) {
         const data = await resp.json();
-        if (data) {
-          studentsData = data;
-          setConnectionState('live', 'REST Sync');
-          renderDashboard();
-        }
+        studentsData = data || {};
+        setConnectionState('connected', 'Connected');
+        renderDashboard();
       } else {
-        setConnectionState('offline', 'DB Standby');
+        setConnectionState('disconnected', 'Disconnected');
       }
     } catch {
-      setConnectionState('offline', 'DB Standby');
+      setConnectionState('disconnected', 'Disconnected');
     }
   };
 
