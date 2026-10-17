@@ -4,7 +4,8 @@
 # DevSecOps & Container DFIR Workshop - CPIFP Alan Turing
 # ==============================================================================
 
-# Clear terminal screen
+# Suppress terminal input echoing during setup
+stty -echo 2>/dev/null || true
 clear
 
 CYAN='\033[0;36m'
@@ -134,3 +135,6 @@ echo -e "${BOLD}${CYAN}=========================================================
 echo ""
 echo -e "${BOLD}${GREEN}Entorno listo. ¡Sigue la guía del escenario a la izquierda!${NC}"
 echo ""
+
+# Restore terminal input echoing for the interactive user session
+stty echo 2>/dev/null || true
