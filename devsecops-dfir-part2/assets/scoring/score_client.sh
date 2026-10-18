@@ -237,7 +237,7 @@ register_alias() {
     if [ "${old_score}" -eq 0 ]; then
         local existing_match
         existing_match=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
-            jq -c --arg a "${new_alias}" 'to_entries | map(select(.value.alias == $a and (.value.totalScore // 0) > 0)) | sort_by(.value.totalScore) | reverse | .[0] // empty' 2>/dev/null)
+            jq -c --arg a "${new_alias}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase))) | sort_by(.value.totalScore // 0) | reverse | .[0] // empty' 2>/dev/null)
 
         if [ -n "${existing_match}" ] && [ "${existing_match}" != "null" ]; then
             local existing_id
@@ -252,6 +252,16 @@ register_alias() {
                     curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
                 fi
 
+                # Clean up any stale duplicate records for this alias in Firebase
+                local other_dup_ids
+                other_dup_ids=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
+                    jq -r --arg a "${new_alias}" --arg keep "${existing_id}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase) and .key != $keep)) | .[].key' 2>/dev/null)
+                for dup_id in ${other_dup_ids}; do
+                    if [ -n "${dup_id}" ] && [ "${dup_id}" != "null" ]; then
+                        curl -s --connect-timeout 4 --max-time 6 -X DELETE "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${dup_id}.json" >/dev/null 2>&1 || true
+                    fi
+                done
+
                 # Restore previous session and ensure step5 object exists
                 echo "${existing_val}" | jq '.challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' > "${STATE_FILE}"
                 chmod 666 "${STATE_FILE}" 2>/dev/null || true
@@ -264,7 +274,7 @@ register_alias() {
                 echo ""
                 echo -e "\033[1;32m======================================================================\033[0m"
                 echo -e "\033[1;32m[✔] ¡Sesión anterior vinculada para: ${new_alias}!\033[0m"
-                echo -e "\033[1;36m[✔] Progreso recuperado: ${cur_score}/1000 pts | Desafíos completados: ${cur_done}/4\033[0m"
+                echo -e "\033[1;36m[✔] Progreso sincronizado: ${cur_score}/1000 pts | Desafíos completados: ${cur_done}/4\033[0m"
                 echo -e "\033[1;36m[ℹ] Marcador en Vivo: ${LEADERBOARD_URL}\033[0m"
                 echo -e "\033[1;32m======================================================================\033[0m"
                 echo ""
