@@ -6,7 +6,6 @@
 
 # Suppress terminal input echoing during setup
 stty -echo 2>/dev/null || true
-clear
 
 CYAN='\033[0;36m'
 GREEN='\033[0;32m'
@@ -15,26 +14,7 @@ YELLOW='\033[1;33m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 
-cat << "EOF"
-================================================================================
-  ____             ____               ___              
- |  _ \  _____   _/ ___|  ___  ___   / _ \ _ __  ___   
- | | | |/ _ \ \ / /\___ \ / _ \/ __| | | | | '_ \/ __|  
- | |_| |  __/\ V /  ___) |  __/ (__  | |_| | |_) \__ \  
- |____/ \___| \_/  |____/ \___|\___|  \___/| .__/|___/  
-                                           |_|          
-   ____  _____ ___ ____    _     _ _                    
-  |  _ \|  ___|_ _|  _ \  | |   (_) |__                 
-  | | | | |_   | || |_) | | |   | | '_ \                
-  | |_| |  _|  | ||  _ <  | |___| | |_) |               
-  |____/|_|   |___|_| \_\ |_____|_|_.__/                
-                                                        
- DevSecOps & DFIR Workshop - CPIFP Alan Turing (Málaga)
- Scenario: Parte 3 (Bonus Track) - Shift-Left DevSecOps & Supply Chain Trust
-================================================================================
-EOF
-
-echo -e "${CYAN}Inicializando entorno avanzado de laboratorio...${NC}\n"
+echo -e "${CYAN}Inicializando entorno avanzado en segundo plano...${NC}"
 
 # Spinner animation while background.sh finishes provisioning
 spin='-\|/'
@@ -44,13 +24,13 @@ ELAPSED=0
 
 while [ ! -f /tmp/killercoda_ready ]; do
     if [ -f /tmp/killercoda_failed ]; then
-        printf "\r${RED}[✘] ¡Falló la inicialización del entorno!                                         ${NC}\n\n"
+        printf "\r${RED}[✘] ¡Falló la inicialización del entorno!                                       ${NC}\n\n"
         echo -e "${BOLD}${RED}Revisa '/var/log/killercoda_background.log' para diagnosticar el fallo.${NC}\n"
         exit 1
     fi
 
     if [ ${ELAPSED} -ge ${TIMEOUT} ]; then
-        printf "\r${RED}[✘] ¡Tiempo de espera agotado tras ${TIMEOUT} segundos!                         ${NC}\n\n"
+        printf "\r${RED}[✘] ¡Tiempo de espera agotado tras ${TIMEOUT} segundos!                       ${NC}\n\n"
         echo -e "${BOLD}${RED}Revisa '/var/log/killercoda_background.log' para diagnosticar el fallo.${NC}\n"
         exit 1
     fi
@@ -60,8 +40,6 @@ while [ ! -f /tmp/killercoda_ready ]; do
     sleep 0.4
     ELAPSED=$((ELAPSED + 1))
 done
-
-printf "\r${GREEN}[✔] ¡Aprovisionamiento completado! Herramientas y registro activos.                     ${NC}\n\n"
 
 # Ensure score and hint command binaries exist in system PATH
 mkdir -p /usr/local/bin /assets/scoring
@@ -116,22 +94,45 @@ if [ ! -f "/tmp/session_state.json" ]; then
     fi
 fi
 
-STUDENT_ALIAS=$(jq -r '.alias' /tmp/session_state.json 2>/dev/null || echo "operative")
+STUDENT_ALIAS=$(jq -r '.alias // "operative"' /tmp/session_state.json 2>/dev/null || echo "operative")
+STUDENT_PIN=$(jq -r '.pin // "----"' /tmp/session_state.json 2>/dev/null || echo "----")
+
+# ==============================================================================
+# LIMPIEZA COMPLETA DE PANTALLA Y MUESTRA LIMPIA DEL BANNER Y BRIEFING
+# ==============================================================================
+clear
+
+cat << "EOF"
+================================================================================
+  ____             ____               ___              
+ |  _ \  _____   _/ ___|  ___  ___   / _ \ _ __  ___   
+ | | | |/ _ \ \ / /\___ \ / _ \/ __| | | | | '_ \/ __|  
+ | |_| |  __/\ V /  ___) |  __/ (__  | |_| | |_) \__ \  
+ |____/ \___| \_/  |____/ \___|\___|  \___/| .__/|___/  
+                                           |_|          
+   ____  _____ ___ ____    _     _ _                    
+  |  _ \|  ___|_ _|  _ \  | |   (_) |__                 
+  | | | | |_   | || |_) | | |   | | '_ \                
+  | |_| |  _|  | ||  _ <  | |___| | |_) |               
+  |____/|_|   |___|_| \_\ |_____|_|_.__/                
+                                                        
+ DevSecOps & DFIR Workshop - CPIFP Alan Turing (Málaga)
+ Scenario: Parte 3 (Bonus Track) - Shift-Left DevSecOps & Supply Chain Trust
+================================================================================
+EOF
 
 echo ""
 echo -e "${BOLD}${CYAN}================================================================================${NC}"
-echo -e "${BOLD}${CYAN}   CYBER RANGE: PARTE 3 (BONUS TRACK - SHIFT-LEFT & SUPPLY CHAIN TRUST)         ${NC}"
+echo -e "${BOLD}${CYAN}      CYBER RANGE: PARTE 3 (BONUS TRACK - SHIFT-LEFT & SUPPLY CHAIN TRUST)       ${NC}"
 echo -e "${BOLD}${CYAN}================================================================================${NC}"
-echo -e "Indicativo provisional asignado: ${BOLD}${GREEN}${STUDENT_ALIAS}${NC}"
+echo -e "Indicativo de sesión: ${BOLD}${GREEN}${STUDENT_ALIAS}${NC} (PIN: ${BOLD}${YELLOW}${STUDENT_PIN}${NC})"
 echo ""
-echo -e "${BOLD}${YELLOW}IMPORTANTE:${NC} Para vincular los 1000 puntos que conseguiste en las Partes 1 y 2,"
-echo -e "registra el mismo nombre o indicativo que usaste anteriormente:"
-echo -e "  ${BOLD}${YELLOW}score register <tu_nombre_anterior>${NC}"
-echo ""
-echo -e "Ejemplo:  ${CYAN}score register alberto-sec${NC}"
+echo -e "Para continuar con tu puntuación de las partes anteriores, ejecuta:"
+echo -e "  ${BOLD}${YELLOW}score resume <tu_nombre_anterior> <tu_pin>${NC}"
+echo -e "  Ejemplo: ${CYAN}score resume alberto-sec 1234${NC}"
 echo ""
 echo -e "Marcador en Vivo: ${CYAN}https://rickyallitt.github.io/Taller-Alan-Turing${NC}"
-echo -e "Pistas Tácticas: Escribe '${YELLOW}hint 5${NC}' para orientación técnica sobre Trivy o Cosign."
+echo -e "Recompensa Bonus: +250 Puntos y estatus 'Operativo Élite' en el Leaderboard."
 echo -e "${BOLD}${CYAN}================================================================================${NC}"
 echo ""
 echo -e "${BOLD}${GREEN}Entorno listo. ¡Sigue la guía del escenario a la izquierda!${NC}"
