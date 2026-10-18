@@ -63,12 +63,12 @@ Este escenario sumerge a los estudiantes en un entorno práctico de 75 minutos e
 │   ├── step3.md y step4.md                # Retos 3 (Triaje OverlayFS + YARA) y 4 (Bastionado CIS)
 │   ├── step3/ y step4/                    # Scripts de verificación y scoring
 │   └── assets/                            # Recursos, scoring client y pistas
-└── devsecops-dfir-part3/                  # Escenario Parte 3 (Bonus Track: Reto 5 - 35 min)
+└── devsecops-dfir-part3/                  # Escenario Parte 3 (Bonus Track: Retos 5 y 6 - 45 min)
     ├── index.json                         # Manifiesto de Killercoda Parte 3
     ├── background.sh / foreground.sh      # Aprovisionamiento (Trivy, Cosign, registry) y sesión
     ├── intro.md / finish.md               # Briefing y post-mortem de arquitectura Zero Trust
-    ├── step5.md                           # Reto 5 (Auditoría Trivy y Firma Cosign)
-    ├── step5/verify.sh                    # Script de verificación y scoring
+    ├── step5.md y step6.md                # Retos 5 (Auditoría Trivy + Cosign) y 6 (Puerta de Admisión Zero Trust)
+    ├── step5/ y step6/                    # Scripts de verificación y scoring
     └── assets/                            # Recursos, Dockerfile vulnerable y scoring client
 ```
 

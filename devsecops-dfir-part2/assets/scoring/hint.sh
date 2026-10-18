@@ -23,6 +23,7 @@ show_usage() {
     echo "  hint 3  - Desafío 3: Triaje en OverlayFS y Caza de Amenazas con YARA"
     echo "  hint 4  - Desafío 4: Bastionado de Producción según CIS Benchmark"
     echo "  hint 5  - Desafío 5 (Bonus): Auditoría con Trivy y Firma con Cosign"
+    echo "  hint 6  - Desafío 6 (Bonus): Puerta de Admisión Zero Trust"
     echo ""
     echo "Aviso: Desbloquear pistas restará puntos de tu puntuación final."
     echo "======================================================================"
@@ -31,8 +32,8 @@ show_usage() {
 
 [ -z "${STEP}" ] && show_usage
 
-if ! [[ "${STEP}" =~ ^[1-5]$ ]]; then
-    echo "Error: Paso '${STEP}' no válido. Debe ser 1, 2, 3, 4 o 5."
+if ! [[ "${STEP}" =~ ^[1-6]$ ]]; then
+    echo "Error: Paso '${STEP}' no válido. Debe ser entre 1 y 6."
     exit 1
 fi
 
@@ -126,12 +127,20 @@ case "${STEP}" in
             "Directivas de Privilegios y Almacenamiento:\n  4. Elimina capacidades del kernel: cap_drop: [\"ALL\"]\n  5. Bloquea escaladas de privilegios: security_opt: [\"no-new-privileges:true\"]\n  6. Asigna almacenamiento volátil en memoria para /tmp:\n     tmpfs: [\"/tmp:rw,noexec,nosuid,size=64m\"]\nDespliega con: docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate"
         ;;
     5)
-        echo "Desafío 5 (Bonus): Auditoría con Trivy y Firma con Cosign (Base: 250 pts)"
+        echo "Desafío 5 (Bonus): Auditoría con Trivy y Firma con Cosign (Base: 125 pts)"
         echo ""
         prompt_unlock 5 1 25 \
-            "Pista de Auditoría Shift-Left (Trivy):\nPara escanear vulnerabilidades críticas y secretos en la imagen del registro local:\n  trivy image --severity CRITICAL localhost:5000/victim-service:v1.0\n  trivy image --scanners secret localhost:5000/victim-service:v1.0\nEn tu Dockerfile.hardened debes usar una base segura (ej. alpine:3.20), eliminar las variables de entorno de credenciales y añadir un USER no privilegiado."
+            "Pista de Remediación: Revisa la base de la imagen en Dockerfile.hardened (usa 'alpine:3.20') y elimina las directivas ENV con contraseñas."
         prompt_unlock 5 2 50 \
-            "Pista de Firma y Verificación Criptográfica (Cosign):\nGenera el par de claves sin contraseña interactiva:\n  cd /root/shift-left\n  COSIGN_PASSWORD=\"\" cosign generate-key-pair\nConstruye y sube tu imagen remediada:\n  docker build -t localhost:5000/victim-service:hardened -f Dockerfile.hardened .\n  docker push localhost:5000/victim-service:hardened\nFirma criptográficamente la imagen:\n  COSIGN_PASSWORD=\"\" cosign sign --yes --key cosign.key localhost:5000/victim-service:hardened\nVerifícala con:\n  cosign verify --key cosign.pub localhost:5000/victim-service:hardened"
+            "Pista de Firma Cosign: Genera claves sin prompt interactivo con 'COSIGN_PASSWORD=\"\" cosign generate-key-pair'. Firma la imagen en localhost:5000/victim-service:hardened con 'cosign sign --yes --key cosign.key'."
+        ;;
+    6)
+        echo "Desafío 6 (Bonus): Puerta de Admisión Zero Trust y Policy as Code (Base: 125 pts)"
+        echo ""
+        prompt_unlock 6 1 25 \
+            "Pista de Verificación: Tu script /root/shift-left/admission_gate.sh debe comprobar 'cosign verify --key /root/shift-left/cosign.pub \"\$1\"'. Si falla, imprime rechazo y sal con código 1."
+        prompt_unlock 6 2 50 \
+            "Pista de Despliegue Bastionado: Si la firma y Trivy (trivy image --exit-code 1 --severity CRITICAL \"\$1\") pasan, arranca el contenedor con: 'docker run -d --name secure_production_service --read-only --user 10001:10001 --security-opt no-new-privileges:true --cap-drop ALL \"\$1\"'."
         ;;
 esac
 

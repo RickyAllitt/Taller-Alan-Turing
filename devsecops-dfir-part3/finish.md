@@ -16,9 +16,10 @@ A lo largo de los 5 desafíos has cubierto el ciclo de vida completo de un incid
    - Triaje forense de sistemas de ficheros en capas (Docker OverlayFS / UpperDir) y creación de reglas YARA para la caza y detección de implantes maliciosos.
    - Bastionado en tiempo de ejecución conforme al **CIS Docker Benchmark**: ejecución sin privilegios (`USER non-root`), sistema de ficheros de sólo lectura (`read_only: true`), eliminación de capacidades (`cap_drop: ["ALL"]`) y bloqueo de escaladas (`no-new-privileges: true`).
 
-3. **Fase DevSecOps Shift-Left y Cadena de Suministro (Desafío 5)**:
+3. **Fase DevSecOps Shift-Left, Firma y Política de Admisión (Desafíos 5 y 6)**:
    - Integración de escaneo automatizado de vulnerabilidades y detección de secretos en repositorios OCI mediante **Trivy**.
    - Establecimiento de procedencia y firma criptográfica inmutable mediante **Cosign** (Sigstore), garantizando que ningún contenedor no firmado pueda desplegarse en entornos productivos.
+   - Implementación de una puerta de admisión automatizada (**Admission Gate / Policy as Code**) que intercepta artefactos en el pipeline y obliga al despliegue bajo directivas Zero Trust.
 
 ---
 

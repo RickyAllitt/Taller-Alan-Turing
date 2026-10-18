@@ -74,7 +74,8 @@ init_session() {
     "step2": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
     "step3": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
     "step4": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
-    "step5": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }
+    "step5": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
+    "step6": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }
   }
 }
 EOF
@@ -185,6 +186,8 @@ complete_challenge() {
             "4_2") penalty=$((penalty + 60)) ;;
             "5_1") penalty=$((penalty + 25)) ;;
             "5_2") penalty=$((penalty + 50)) ;;
+            "6_1") penalty=$((penalty + 25)) ;;
+            "6_2") penalty=$((penalty + 50)) ;;
         esac
     done
 
@@ -324,7 +327,7 @@ register_alias() {
             echo "${existing_val}" | jq \
                 --arg p "${assigned_pin}" \
                 --arg ph "${new_hash}" \
-                '.pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
+                '.pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }) | .challenges.step6 = (.challenges.step6 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
                 > "${STATE_FILE}"
             chmod 666 "${STATE_FILE}" 2>/dev/null || true
 
@@ -399,7 +402,7 @@ register_alias() {
             --arg id "${new_student_id}" \
             --arg p "${assigned_pin}" \
             --arg ph "${assigned_hash}" \
-            '.alias = $a | .studentId = $id | .pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
+            '.alias = $a | .studentId = $id | .pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }) | .challenges.step6 = (.challenges.step6 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
             "${STATE_FILE}")
         echo "${tmp_json}" > "${STATE_FILE}"
     else

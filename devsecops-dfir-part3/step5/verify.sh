@@ -109,9 +109,9 @@ echo -e "${BOLD}${GREEN}========================================================
 echo -e "${BOLD}${GREEN}[✔] ¡VALIDACIÓN EXITOSA! Cadena de suministro securizada y firmada.    ${NC}"
 echo -e "${BOLD}${GREEN}======================================================================${NC}"
 
-# Enviar telemetría al Leaderboard
+# Enviar telemetría al Leaderboard (+125 pts)
 if [ -x "${SCORE_CLIENT}" ]; then
-    bash "${SCORE_CLIENT}" complete 5 250
+    bash "${SCORE_CLIENT}" complete 5 125
 elif [ -x "/usr/local/bin/score" ]; then
-    /usr/local/bin/score complete 5 250
+    /usr/local/bin/score complete 5 125
 fi

@@ -217,7 +217,7 @@ function processStudents() {
     const ch = item.challenges || {};
 
     let totalHints = 0;
-    ['step1', 'step2', 'step3', 'step4', 'step5'].forEach((step) => {
+    ['step1', 'step2', 'step3', 'step4', 'step5', 'step6'].forEach((step) => {
       if (ch[step] && Array.isArray(ch[step].hintsTaken)) {
         totalHints += ch[step].hintsTaken.length;
       }
@@ -277,7 +277,8 @@ function renderFirstBlood(students) {
     { key: 'step2', name: 'Step 2: Socket Breakout' },
     { key: 'step3', name: 'Step 3: DFIR YARA' },
     { key: 'step4', name: 'Step 4: CIS Hardening' },
-    { key: 'step5', name: 'Bonus: Cosign Trust' }
+    { key: 'step5', name: 'Bonus 1: Cosign Trust' },
+    { key: 'step6', name: 'Bonus 2: Admission Gate' }
   ];
 
   elements.firstBloodGrid.innerHTML = '';
@@ -319,7 +320,7 @@ function renderDashboard() {
     const matchesFilter = 
       filterStatus === 'all' ? true :
       filterStatus === 'completed' ? s.completedChallenges >= 4 :
-      filterStatus === 'elite' ? (s.challenges.step5 && s.challenges.step5.completed) :
+      filterStatus === 'elite' ? ((s.challenges.step5 && s.challenges.step5.completed) || (s.challenges.step6 && s.challenges.step6.completed)) :
       filterStatus === 'in_progress' ? s.completedChallenges < 4 : true;
 
     const matchesSearch = s.alias.toLowerCase().includes(searchQuery.toLowerCase());
@@ -346,11 +347,11 @@ function renderDashboard() {
     const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
     const initials = s.alias.slice(0, 2).toUpperCase();
     const progressPercent = Math.min(100, Math.round((s.totalScore / activeConfig.totalBaseScore) * 100));
-    const isElite = !!(s.challenges.step5 && s.challenges.step5.completed);
+    const isElite = !!((s.challenges.step5 && s.challenges.step5.completed) || (s.challenges.step6 && s.challenges.step6.completed));
 
     // Get last completed challenge timestamp
     let lastTime = s.registeredAt;
-    ['step5', 'step4', 'step3', 'step2', 'step1'].some(step => {
+    ['step6', 'step5', 'step4', 'step3', 'step2', 'step1'].some(step => {
       if (s.challenges[step] && s.challenges[step].completed && s.challenges[step].completedAt) {
         lastTime = s.challenges[step].completedAt;
         return true;
@@ -405,7 +406,8 @@ function renderDashboard() {
           ${renderStepBadge('step2', 'Ch 2')}
           ${renderStepBadge('step3', 'Ch 3')}
           ${renderStepBadge('step4', 'Ch 4')}
-          ${renderStepBadge('step5', 'Bonus', true)}
+          ${renderStepBadge('step5', 'B1', true)}
+          ${renderStepBadge('step6', 'B2', true)}
         </div>
       </td>
       <td>
@@ -418,7 +420,7 @@ function renderDashboard() {
       </td>
       <td>
         <span class="status-tag ${s.completedChallenges >= 5 ? 'completed' : s.completedChallenges >= 4 ? 'completed' : 'in-progress'}" style="${s.completedChallenges >= 5 ? 'background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #facc15;' : ''}">
-          ${s.completedChallenges >= 5 ? '★ Élite (5/5)' : s.completedChallenges >= 4 ? 'Completed (4/4)' : `In Progress (${s.completedChallenges}/4)`}
+          ${s.completedChallenges >= 6 ? '★ Élite Max (6/6)' : s.completedChallenges >= 5 ? '★ Élite (5/6)' : s.completedChallenges >= 4 ? 'Completed (4/4)' : `In Progress (${s.completedChallenges}/4)`}
         </span>
       </td>
     `;

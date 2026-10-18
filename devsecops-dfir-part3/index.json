@@ -1,8 +1,8 @@
 {
   "title": "Parte 3: DevSecOps Shift-Left & Supply Chain Trust (Bonus Track)",
-  "description": "Desafío avanzado y bonus del taller CPIFP Alan Turing: Auditoría de vulnerabilidades con Trivy, detección de secretos en capas y firma criptográfica con Cosign.",
+  "description": "Desafíos avanzados del taller CPIFP Alan Turing: Auditoría de vulnerabilidades con Trivy, detección de secretos, firma con Cosign y puerta de admisión Zero Trust.",
   "difficulty": "Intermediate",
-  "time": "35 minutes",
+  "time": "45 minutes",
   "details": {
     "intro": {
       "text": "intro.md",
@@ -11,9 +11,14 @@
     },
     "steps": [
       {
-        "title": "Desafío 5 (Bonus): Auditoría con Trivy y Firma Criptográfica con Cosign",
+        "title": "Desafío 5 (Bonus 1): Auditoría con Trivy y Firma Criptográfica con Cosign",
         "text": "step5.md",
         "verify": "step5/verify.sh"
+      },
+      {
+        "title": "Desafío 6 (Bonus 2): Puerta de Admisión Zero Trust y Policy as Code",
+        "text": "step6.md",
+        "verify": "step6/verify.sh"
       }
     ],
     "finish": {
@@ -25,6 +30,11 @@
       {
         "file": "step5/verify.sh",
         "target": "/step5/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step6/verify.sh",
+        "target": "/step6/",
         "chmod": "+x"
       },
       {
@@ -57,6 +67,11 @@
       {
         "file": "step5/verify.sh",
         "target": "/step5/",
+        "chmod": "+x"
+      },
+      {
+        "file": "step6/verify.sh",
+        "target": "/step6/",
         "chmod": "+x"
       },
       {

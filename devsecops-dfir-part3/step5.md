@@ -1,6 +1,6 @@
 # Desafío 5 (Bonus): Auditoría con Trivy y Firma Criptográfica de Imágenes con Cosign
 
-**Puntuación:** 250 puntos (Bonus adicional sobre la base de 1000)  
+**Puntuación:** 125 puntos (Bonus adicional sobre la base de 1000)  
 **Tiempo estimado:** 25 - 35 minutos  
 **Directorio de trabajo:** `/root/shift-left/`  
 **Registro local:** `localhost:5000`
@@ -66,22 +66,11 @@ Aplica las siguientes buenas prácticas DevSecOps:
    USER appuser
    ```
 
-Ejemplo de estructura recomendada para `Dockerfile.hardened`:
-
-```dockerfile
-FROM alpine:3.20
-
-RUN apk update && apk add --no-cache bash
-
-WORKDIR /app
-COPY app.sh /app/app.sh
-RUN chmod +x /app/app.sh
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
-
-ENTRYPOINT ["/app/app.sh"]
-```
+Diseña tu `Dockerfile.hardened` asegurando que:
+- La imagen base sea una versión moderna y limpia (ej. `alpine:3.20`).
+- Se mantenga la copia e instalación del script de servicio `/app/app.sh`.
+- Se eliminen por completo las variables de entorno (`ENV`) que filtraban contraseñas y claves en las capas.
+- Se declare un usuario y grupo no root (`USER appuser`) para la ejecución del contenedor.
 
 ### Construcción y Publicación en el Registro
 Compila la nueva imagen con la etiqueta `hardened` y súbela al registro local:
@@ -152,4 +141,4 @@ El validador comprobará:
 5. Cero vulnerabilidades CRITICAL reportadas por Trivy.
 6. Cero secretos filtrados reportados por Trivy.
 
-Tras la validación, el cliente registrará los **+250 puntos** y actualizará tu estatus a **Operativo Élite** en el [Leaderboard](https://rickyallitt.github.io/Taller-Alan-Turing).
+Tras la validación, el cliente registrará los **+125 puntos** y actualizará tu progreso en el [Leaderboard](https://rickyallitt.github.io/Taller-Alan-Turing).

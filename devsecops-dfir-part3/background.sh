@@ -72,7 +72,7 @@ done
 
 # 6. Prepare scenario assets & workspace
 echo "[WORKSPACE] Setting up /root/shift-left workspace..."
-mkdir -p /root/shift-left /assets/scoring /step5
+mkdir -p /root/shift-left /assets/scoring /step5 /step6
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -128,6 +128,11 @@ if [ -f "${SCRIPT_DIR}/step5/verify.sh" ]; then
     cp "${SCRIPT_DIR}/step5/verify.sh" /step5/verify.sh
 fi
 chmod 755 /step5/verify.sh 2>/dev/null || true
+
+if [ -f "${SCRIPT_DIR}/step6/verify.sh" ]; then
+    cp "${SCRIPT_DIR}/step6/verify.sh" /step6/verify.sh
+fi
+chmod 755 /step6/verify.sh 2>/dev/null || true
 
 if [ -d "${SCRIPT_DIR}/assets/scoring" ]; then
     cp -ru "${SCRIPT_DIR}/assets/scoring/"* /assets/scoring/ 2>/dev/null || true

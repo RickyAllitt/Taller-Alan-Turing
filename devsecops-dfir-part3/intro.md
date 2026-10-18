@@ -17,15 +17,15 @@ Sin embargo, en arquitecturas cloud-native empresariales (Kubernetes, Docker Swa
 
 ---
 
-## Objetivos del Desafío
+## Objetivos del Desafío Bonus
 
-En este laboratorio avanzado utilizarás dos de las herramientas líderes en el ecosistema DevSecOps de la Cloud Native Computing Foundation (CNCF):
+En este laboratorio avanzado consolidarás la seguridad en la cadena de suministro y el despliegue mediante dos retos especializados:
 
-- **Trivy (Aqua Security)**: Escáner integral de seguridad para contenedores, dependencias y secretos.
-- **Cosign (Sigstore / OpenSSF)**: Estándar para firma criptográfica, verificación y procedencia de contenedores sin sobrecarga de infraestructura.
+1. **Desafío 5 (Bonus 1 - 125 pts)**: Auditoría estática de vulnerabilidades críticas y filtración de secretos con **Trivy**, remediación en `Dockerfile.hardened` y firma criptográfica inmutable con **Cosign** (Sigstore / OpenSSF).
+2. **Desafío 6 (Bonus 2 - 125 pts)**: Implementación de una puerta de admisión automatizada (**Admission Gate / Policy as Code**) en `/root/shift-left/admission_gate.sh` que valide firmas y escaneos antes de autorizar el despliegue del contenedor con directivas CIS en tiempo de ejecución.
 
-Completar este desafío te otorgará:
-- **+250 Puntos Bonus** adicionales (puntuación máxima alcanzable: 1250 puntos).
+Completar ambos desafíos te otorgará:
+- **+250 Puntos Bonus** adicionales (125 pts por reto, puntuación máxima alcanzable: 1250 puntos).
 - La distinción **Operativo Élite** en el Marcador en Tiempo Real.
 
 ---
@@ -38,6 +38,6 @@ Si completaste la Parte 1 y la Parte 2, vincula tu expediente introduciendo en l
 score resume <tu_indicativo_anterior> <tu_pin>
 ```
 
-El cliente recuperará tu registro histórico y sumará los puntos del Desafío 5 a tu puntuación global.
+El cliente recuperará tu registro histórico y sumará los puntos de los retos adicionales a tu puntuación global.
 
 Pulsa en **Continuar** para acceder a la guía técnica del desafío.
