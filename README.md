@@ -17,7 +17,7 @@ Este escenario sumerge a los estudiantes en un entorno práctico de 75 minutos e
 
 ---
 
-## 🎯 Sistema de Pistas y Puntuación (1.000 Puntos Totales)
+## 🎯 Sistema de Pistas y Puntuación (1.000 Puntos Base + 250 Puntos Bonus)
 
 - **Registro en Vivo**: Al iniciar la terminal de Killercoda, el script `foreground.sh` solicita un alias o indicativo al alumno y registra la sesión en Firebase.
 - **Pistas en Terminal**: El alumno puede consultar pistas en cualquier momento mediante el comando:

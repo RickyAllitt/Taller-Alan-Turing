@@ -346,8 +346,13 @@ function renderDashboard() {
     const rank = index + 1;
     const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
     const initials = s.alias.slice(0, 2).toUpperCase();
-    const progressPercent = Math.min(100, Math.round((s.totalScore / activeConfig.totalBaseScore) * 100));
-    const isElite = !!((s.challenges.step5 && s.challenges.step5.completed) || (s.challenges.step6 && s.challenges.step6.completed));
+
+    const bonusCount = (s.challenges.step5 && s.challenges.step5.completed ? 1 : 0) + (s.challenges.step6 && s.challenges.step6.completed ? 1 : 0);
+    const baseCount = ['step1', 'step2', 'step3', 'step4'].filter(k => s.challenges[k] && s.challenges[k].completed).length;
+    const isElite = bonusCount > 0;
+
+    const maxScoreTarget = s.totalScore > activeConfig.totalBaseScore ? activeConfig.maxBonusScore : activeConfig.totalBaseScore;
+    const progressPercent = Math.min(100, Math.round((s.totalScore / maxScoreTarget) * 100));
 
     // Get last completed challenge timestamp
     let lastTime = s.registeredAt;
@@ -375,6 +380,13 @@ function renderDashboard() {
       `;
     };
 
+    const eliteTitle = bonusCount === 2 ? 'Bonus Track Completo (+250 pts)' : 'Reto Bonus Superado (+125 pts)';
+    const statusLabel = 
+      bonusCount === 2 && baseCount === 4 ? '★ Élite Max (6/6)' :
+      bonusCount > 0 ? `★ Élite (${baseCount + bonusCount}/6)` :
+      baseCount === 4 ? 'Completed (4/4)' :
+      `In Progress (${baseCount}/4)`;
+
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>
@@ -386,7 +398,7 @@ function renderDashboard() {
           <div>
             <div class="operative-alias">
               ${escapeHtml(s.alias)}
-              ${isElite ? '<span class="elite-badge" title="Reto Bonus Superado (+250 pts)">★ ÉLITE</span>' : ''}
+              ${isElite ? `<span class="elite-badge" title="${eliteTitle}">★ ÉLITE</span>` : ''}
             </div>
             <div class="operative-registered">Reg: ${escapeHtml(s.registeredAt)}</div>
           </div>
@@ -394,7 +406,8 @@ function renderDashboard() {
       </td>
       <td>
         <div class="score-cell">
-          <span class="score-main" style="${s.totalScore > 1000 ? 'color: #facc15;' : ''}">${s.totalScore}</span> <span style="font-size: 0.75rem; color: var(--text-muted);">/ 1000</span>
+          <span class="score-main" style="${s.totalScore > 1000 ? 'color: #facc15;' : ''}">${s.totalScore}</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">${s.totalScore > activeConfig.totalBaseScore ? `/ ${activeConfig.maxBonusScore}` : `/ ${activeConfig.totalBaseScore}`}</span>
           <div class="score-progress-bar">
             <div class="score-progress-fill ${isElite ? 'elite' : ''}" style="width: ${progressPercent}%;"></div>
           </div>
@@ -419,8 +432,8 @@ function renderDashboard() {
         ${escapeHtml(lastTime)}
       </td>
       <td>
-        <span class="status-tag ${s.completedChallenges >= 5 ? 'completed' : s.completedChallenges >= 4 ? 'completed' : 'in-progress'}" style="${s.completedChallenges >= 5 ? 'background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #facc15;' : ''}">
-          ${s.completedChallenges >= 6 ? '★ Élite Max (6/6)' : s.completedChallenges >= 5 ? '★ Élite (5/6)' : s.completedChallenges >= 4 ? 'Completed (4/4)' : `In Progress (${s.completedChallenges}/4)`}
+        <span class="status-tag ${isElite || baseCount >= 4 ? 'completed' : 'in-progress'}" style="${isElite ? 'background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #facc15;' : ''}">
+          ${statusLabel}
         </span>
       </td>
     `;

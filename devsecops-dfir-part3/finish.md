@@ -6,7 +6,7 @@ Enhorabuena, has completado con éxito la **Parte 3 (Bonus Track)** y con ello e
 
 ## Síntesis Técnica del Taller Completo
 
-A lo largo de los 5 desafíos has cubierto el ciclo de vida completo de un incidente de seguridad en entornos cloud-native:
+A lo largo de los 6 desafíos has cubierto el ciclo de vida completo de un incidente de seguridad en entornos cloud-native:
 
 1. **Fase Ofensiva (Desafíos 1 y 2)**:
    - Comprensión de vectores de ataque en pipelines CI/CD y exfiltración de secretos en memoria de procesos (`/proc/$PID/environ`).
