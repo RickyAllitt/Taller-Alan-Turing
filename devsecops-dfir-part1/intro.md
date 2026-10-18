@@ -60,17 +60,22 @@ Al iniciar la sesión, la terminal asigna automáticamente un indicativo provisi
 Para establecer tu nombre o alias en el marcador en vivo de la clase, ejecuta en la terminal:
 
 ```bash
-score register <tu_nombre_o_alias>
+score register <tu_nombre_o_alias> [pin_opcional]
 ```
 
 Ejemplo:
 ```bash
-score register alberto-sec
+score register alberto-sec 1234
 ```
 
+- **PIN de Seguridad y Prevención de Suplantación:** Al registrarte, puedes especificar un PIN personal de 4 dígitos o el sistema te generará uno automáticamente. Este PIN protege tu usuario frente a colisiones o usos indebidos de otros compañeros.
+- **Reanudar sesión tras reinicio o cambio de máquina:** Si reinicias tu máquina o pasas a la Parte 2, recupera tu sesión y puntos con:
+  ```bash
+  score resume alberto-sec 1234
+  ```
 - **Requisitos de formato:** Entre 2 y 20 caracteres alfanuméricos (guiones y guiones bajos permitidos).
 - **Correlación de telemetría:** Tu indicativo reflejará tu puntuación, marcas de tiempo (hora local española / CET), penalizaciones de pistas y reconocimientos de "First Blood" (primer participante en resolver cada fase).
-- **Consulta de estado:** Ejecuta `score status` en cualquier momento para consultar tu puntuación actual y desafíos completados.
+- **Consulta de estado:** Ejecuta `score status` en cualquier momento para consultar tu puntuación actual, retos completados y tu PIN asignado.
 
 ### Sistema de Pistas Tácticas
 Si te encuentras bloqueado en cualquier desafío, puedes solicitar orientación técnica mediante el comando:

@@ -54,19 +54,19 @@ La **Parte 2** comprende las dos fases defensivas de respuesta a incidentes (**D
 *Al completar la Parte 2 habrás alcanzado el total máximo de **1.000 Puntos Base** en el marcador de la clase.*
 
 ### Vinculación de Tu Sesión (Mismo Indicativo que en Parte 1)
-Para continuar con tu puntuación de la Parte 1, debes registrar en la terminal el **MISMO nombre o indicativo** que utilizaste anteriormente:
+Para continuar con tu puntuación de la Parte 1, reanuda tu sesión con tu nombre y el PIN asignado en la primera parte:
 
 ```bash
-score register <tu_nombre_de_la_parte_1>
+score resume <tu_nombre_de_la_parte_1> <tu_pin>
 ```
 
 Ejemplo:
 ```bash
-score register alberto-sec
+score resume alberto-sec 1234
 ```
 
-- **Reconocimiento Automático:** Al ingresar tu nombre anterior, el sistema detectará tu registro en Firebase y restaurará tus 450 puntos previos y los desafíos ya completados.
-- **Consulta de Estado:** Ejecuta `score status` en cualquier momento para comprobar tus puntos acumulados (ej. `450/1000 pts`).
+- **Reconocimiento y Protección con PIN:** El sistema verificará tu PIN contra el hash criptográfico registrado en Firebase, recuperará tus 450 puntos previos y mantendrá tu historial intacto.
+- **Consulta de Estado:** Ejecuta `score status` en cualquier momento para comprobar tus puntos acumulados (ej. `450/1000 pts`) y tu PIN activo.
 
 ### Sistema de Pistas Tácticas
 Si te encuentras bloqueado en cualquier desafío, puedes solicitar orientación técnica mediante el comando:

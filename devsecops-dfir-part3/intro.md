@@ -32,10 +32,10 @@ Completar este desafío te otorgará:
 
 ## Vinculación de Tu Puntuación Anterior
 
-Si completaste la Parte 1 y la Parte 2, vincula tu expediente introduciendo en la terminal interactiva:
+Si completaste la Parte 1 y la Parte 2, vincula tu expediente introduciendo en la terminal interactiva tu nombre y tu PIN:
 
 ```bash
-score register <tu_indicativo_anterior>
+score resume <tu_indicativo_anterior> <tu_pin>
 ```
 
 El cliente recuperará tu registro histórico y sumará los puntos del Desafío 5 a tu puntuación global.

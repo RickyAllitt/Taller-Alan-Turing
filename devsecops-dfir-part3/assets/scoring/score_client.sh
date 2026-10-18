@@ -29,9 +29,16 @@ get_spanish_timestamp() {
     date '+%Y-%m-%d %I:%M:%S %p'
 }
 
+# Compute SHA-256 hash of a string
+get_hash() {
+    local val="$1"
+    echo -n "${val}" | sha256sum | cut -d' ' -f1
+}
+
 # Initialize student session
 init_session() {
     local alias="${1:-}"
+    local pin="${2:-}"
     if [ -z "${alias}" ]; then
         alias="operative-$(head -c 3 /dev/urandom | xxd -p 2>/dev/null || echo "$RANDOM")"
     fi
@@ -39,6 +46,12 @@ init_session() {
     # Sanitize alias: alphanumeric, hyphens, underscores only
     alias=$(echo "${alias}" | tr -cd 'a-zA-Z0-9_-' | cut -c 1-20)
     [ -z "${alias}" ] && alias="operative-$RANDOM"
+
+    if [ -z "${pin}" ]; then
+        pin=$(shuf -i 1000-9999 -n 1 2>/dev/null || echo $((1000 + RANDOM % 9000)))
+    fi
+    local pin_hash
+    pin_hash=$(get_hash "${pin}")
 
     local rand_suffix
     rand_suffix=$(head -c 3 /dev/urandom | xxd -p 2>/dev/null || echo "$RANDOM")
@@ -50,6 +63,8 @@ init_session() {
 {
   "studentId": "${student_id}",
   "alias": "${alias}",
+  "pin": "${pin}",
+  "pinHash": "${pin_hash}",
   "registeredAt": "${now}",
   "totalScore": 0,
   "completedChallenges": 0,
@@ -140,7 +155,7 @@ complete_challenge() {
     already_done=$(jq -r ".challenges.${step_key}.completed" "${STATE_FILE}" 2>/dev/null)
 
     if [ "${already_done}" = "true" ]; then
-        echo -e "\033[0;33m[INFO] Challenge ${step_num} was previously scored.\033[0m"
+        echo -e "\033[0;33m[INFO] El reto ${step_num} ya fue puntuado anteriormente.\033[0m"
         return 0
     fi
 
@@ -156,10 +171,9 @@ complete_challenge() {
     local penalty=0
     local hints_taken
     hints_taken=$(jq -c ".challenges.${step_key}.hintsTaken // []" "${STATE_FILE}" 2>/dev/null)
-    [ -z "${hints_taken}" ] || [ "${hints_taken}" = "null" ] && hints_taken="[]"
 
-    for tier in $(echo "${hints_taken}" | jq -r '.[]?' 2>/dev/null); do
-        case "${step_num}_${tier}" in
+    for h in $(echo "${hints_taken}" | jq -r '.[]'); do
+        case "${step_num}_${h}" in
             "1_1") penalty=$((penalty + 25)) ;;
             "1_2") penalty=$((penalty + 50)) ;;
             "2_1") penalty=$((penalty + 30)) ;;
@@ -177,13 +191,13 @@ complete_challenge() {
     local net_score=$((base_points - penalty))
     [ ${net_score} -lt 0 ] && net_score=0
 
-    # Update state file
+    # Atomically update local state with step completion and total score
     local tmp_json
     tmp_json=$(jq \
-        --arg date "${now}" \
+        --arg completedAt "${now}" \
         --argjson score "${net_score}" \
         ".challenges.${step_key}.completed = true |
-         .challenges.${step_key}.completedAt = \$date |
+         .challenges.${step_key}.completedAt = \$completedAt |
          .challenges.${step_key}.score = \$score |
          .completedChallenges = ([.challenges[] | select(.completed == true)] | length) |
          .totalScore = ([.challenges[].score] | add) |
@@ -191,6 +205,7 @@ complete_challenge() {
         "${STATE_FILE}")
 
     echo "${tmp_json}" > "${STATE_FILE}"
+    chmod 666 "${STATE_FILE}" 2>/dev/null || true
 
     sync_to_firebase
 
@@ -203,85 +218,175 @@ complete_challenge() {
 
     echo ""
     echo -e "\033[1;32m======================================================================\033[0m"
-    echo -e "\033[1;32m[TELEMETRY] Challenge ${step_num} Solved: +${net_score} Points Awarded (Base: ${base_points}, Hints Penalty: -${penalty})\033[0m"
-    echo -e "\033[1;36m[OPERATIVE] ${alias} | Total Score: ${total_score} pts | Solved: ${completed_count} Challenges $([ ${completed_count} -ge 5 ] && echo '(★ ÉLITE)')\033[0m"
-    echo -e "\033[1;36m[TIMESTAMP] ${now} (Spanish Local Time)\033[0m"
-    echo -e "\033[1;33m[LEADERBOARD] Realtime Standings: ${LEADERBOARD_URL}\033[0m"
+    echo -e "\033[1;32m[TELEMETRY] Reto ${step_num} superado: +${net_score} pts (Base: ${base_points}, Penalizaciones: -${penalty})\033[0m"
+    echo -e "\033[1;36m[OPERATIVO] ${alias} | Puntuacion total: ${total_score} pts | Retos: ${completed_count}/4 $([ ${completed_count} -ge 5 ] && echo '(ELITE)')\033[0m"
+    echo -e "\033[1;36m[FECHA] ${now} (Hora local Espana)\033[0m"
+    echo -e "\033[1;33m[LEADERBOARD] Marcador en vivo: ${LEADERBOARD_URL}\033[0m"
     echo -e "\033[1;32m======================================================================\033[0m"
     echo ""
 }
 
 register_alias() {
     local new_alias="${1:-}"
+    local input_pin="${2:-}"
+    local mode="${3:-register}" # register or resume
+
     if [ -z "${new_alias}" ]; then
-        echo -e "\033[1;33mUsage: score register <your_call_sign>\033[0m"
-        echo -e "Example: score register alberto-sec"
+        echo -e "\033[1;33mUso: score register <tu_nombre> [pin_opcional]\033[0m"
+        echo -e "\033[1;33mReanudar: score resume <tu_nombre> <tu_pin>\033[0m"
+        echo -e "Ejemplo: score register alberto 1234"
         return 1
     fi
 
     # Sanitize alias: alphanumeric, hyphens, underscores only (2-20 characters)
     new_alias=$(echo "${new_alias}" | tr -cd 'a-zA-Z0-9_-' | cut -c 1-20)
     if [ ${#new_alias} -lt 2 ]; then
-        echo -e "\033[1;31m[ERROR] Call sign must be between 2 and 20 alphanumeric characters.\033[0m"
+        echo -e "\033[1;31m[ERROR] El nombre debe tener entre 2 y 20 caracteres alfanumericos.\033[0m"
         return 1
     fi
 
-    local old_student_id=""
-    local old_score=0
+    local current_student_id=""
+    local current_alias=""
+    local current_score=0
     if [ -f "${STATE_FILE}" ]; then
-        old_student_id=$(jq -r '.studentId // ""' "${STATE_FILE}" 2>/dev/null)
-        old_score=$(jq -r '.totalScore // 0' "${STATE_FILE}" 2>/dev/null)
+        current_student_id=$(jq -r '.studentId // ""' "${STATE_FILE}" 2>/dev/null)
+        current_alias=$(jq -r '.alias // ""' "${STATE_FILE}" 2>/dev/null)
+        current_score=$(jq -r '.totalScore // 0' "${STATE_FILE}" 2>/dev/null)
     fi
 
-    # If the local session has 0 score, check if a previous session exists in Firebase for this alias
-    if [ "${old_score}" -eq 0 ]; then
-        local existing_match
-        existing_match=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
-            jq -c --arg a "${new_alias}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase))) | sort_by(.value.totalScore // 0) | reverse | .[0] // empty' 2>/dev/null)
+    # Query Firebase for existing record with this alias (case-insensitive)
+    local existing_match
+    existing_match=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
+        jq -c --arg a "${new_alias}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase))) | sort_by(.value.totalScore // 0) | reverse | .[0] // empty' 2>/dev/null)
 
-        if [ -n "${existing_match}" ] && [ "${existing_match}" != "null" ]; then
-            local existing_id
-            existing_id=$(echo "${existing_match}" | jq -r '.key')
-            local existing_val
-            existing_val=$(echo "${existing_match}" | jq -c '.value')
+    # -------------------------------------------------------------
+    # CASE 1: The alias already exists in the online database
+    # -------------------------------------------------------------
+    if [ -n "${existing_match}" ] && [ "${existing_match}" != "null" ]; then
+        local existing_id
+        existing_id=$(echo "${existing_match}" | jq -r '.key')
+        local existing_val
+        existing_val=$(echo "${existing_match}" | jq -c '.value')
+        local existing_pin_hash
+        existing_pin_hash=$(echo "${existing_match}" | jq -r '.value.pinHash // empty')
 
-            if [ -n "${existing_id}" ] && [ "${existing_id}" != "null" ]; then
-                # Delete temporary auto-generated session node if different
-                if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${existing_id}" ]; then
-                    local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${old_student_id}.json"
-                    curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
+        # Check if already authenticated on this local machine
+        if [ "${current_student_id}" = "${existing_id}" ]; then
+            echo -e "\033[1;32m[INFO] Ya estas identificado como '${new_alias}' en esta maquina.\033[0m"
+            show_status
+            return 0
+        fi
+
+        # Check authentication / PIN
+        local authenticated=false
+        local assigned_pin=""
+
+        if [ -z "${existing_pin_hash}" ]; then
+            # Legacy session without PIN: allow claiming and set new PIN
+            if [ -n "${input_pin}" ]; then
+                assigned_pin="${input_pin}"
+            else
+                assigned_pin=$(shuf -i 1000-9999 -n 1 2>/dev/null || echo $((1000 + RANDOM % 9000)))
+            fi
+            authenticated=true
+        else
+            # Existing session has a PIN hash
+            if [ -n "${input_pin}" ]; then
+                local input_hash
+                input_hash=$(get_hash "${input_pin}")
+                if [ "${input_hash}" = "${existing_pin_hash}" ]; then
+                    authenticated=true
+                    assigned_pin="${input_pin}"
                 fi
-
-                # Clean up any stale duplicate records for this alias in Firebase
-                local other_dup_ids
-                other_dup_ids=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
-                    jq -r --arg a "${new_alias}" --arg keep "${existing_id}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase))) | sort_by(.value.totalScore // 0) | reverse | map(select(.key != $keep)) | .[].key' 2>/dev/null)
-                for dup_id in ${other_dup_ids}; do
-                    if [ -n "${dup_id}" ] && [ "${dup_id}" != "null" ]; then
-                        curl -s --connect-timeout 4 --max-time 6 -X DELETE "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${dup_id}.json" >/dev/null 2>&1 || true
-                    fi
-                done
-
-                # Restore previous session and ensure step5 object exists
-                echo "${existing_val}" | jq '.challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' > "${STATE_FILE}"
-                chmod 666 "${STATE_FILE}" 2>/dev/null || true
-
-                local cur_score
-                cur_score=$(jq -r '.totalScore // 0' "${STATE_FILE}")
-                local cur_done
-                cur_done=$(jq -r '.completedChallenges // 0' "${STATE_FILE}")
-
-                echo ""
-                echo -e "\033[1;32m======================================================================\033[0m"
-                echo -e "\033[1;32m[✔] ¡Sesión anterior vinculada para: ${new_alias}!\033[0m"
-                echo -e "\033[1;36m[✔] Progreso sincronizado: ${cur_score}/1000 pts | Desafíos completados: ${cur_done}/4\033[0m"
-                echo -e "\033[1;36m[ℹ] Marcador en Vivo: ${LEADERBOARD_URL}\033[0m"
-                echo -e "\033[1;32m======================================================================\033[0m"
-                echo ""
-                return 0
             fi
         fi
+
+        if [ "${authenticated}" = "true" ]; then
+            # Clean up temporary auto-generated session in Firebase if different
+            if [ -n "${current_student_id}" ] && [ "${current_student_id}" != "${existing_id}" ]; then
+                curl -s --connect-timeout 4 --max-time 6 -X DELETE "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${current_student_id}.json" >/dev/null 2>&1 || true
+            fi
+
+            # Clean up duplicate entries in Firebase for this alias
+            local other_dup_ids
+            other_dup_ids=$(curl -s --connect-timeout 4 --max-time 6 "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students.json" 2>/dev/null | \
+                jq -r --arg a "${new_alias}" --arg keep "${existing_id}" 'to_entries | map(select((.value.alias | ascii_downcase) == ($a | ascii_downcase))) | sort_by(.value.totalScore // 0) | reverse | map(select(.key != $keep)) | .[].key' 2>/dev/null)
+            for dup_id in ${other_dup_ids}; do
+                if [ -n "${dup_id}" ] && [ "${dup_id}" != "null" ]; then
+                    curl -s --connect-timeout 4 --max-time 6 -X DELETE "${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${dup_id}.json" >/dev/null 2>&1 || true
+                fi
+            done
+
+            local new_hash
+            new_hash=$(get_hash "${assigned_pin}")
+
+            # Restore existing session locally, ensuring step5 and updated pin/pinHash
+            echo "${existing_val}" | jq \
+                --arg p "${assigned_pin}" \
+                --arg ph "${new_hash}" \
+                '.pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
+                > "${STATE_FILE}"
+            chmod 666 "${STATE_FILE}" 2>/dev/null || true
+
+            sync_to_firebase
+
+            local cur_score
+            cur_score=$(jq -r '.totalScore // 0' "${STATE_FILE}")
+            local cur_done
+            cur_done=$(jq -r '.completedChallenges // 0' "${STATE_FILE}")
+
+            echo ""
+            echo -e "\033[1;32m======================================================================\033[0m"
+            echo -e "\033[1;32m[OK] Sesion vinculada con exito para: ${new_alias}\033[0m"
+            echo -e "\033[1;36m[OK] Progreso restaurado: ${cur_score}/1000 pts | Retos completados: ${cur_done}/4\033[0m"
+            echo -e "\033[1;36m[PIN] Tu PIN de recuperacion es: ${assigned_pin}\033[0m"
+            echo -e "\033[1;33m[LEADERBOARD] Marcador en vivo: ${LEADERBOARD_URL}\033[0m"
+            echo -e "\033[1;32m======================================================================\033[0m"
+            echo ""
+            return 0
+        else
+            # PIN incorrect or not provided
+            echo ""
+            echo -e "\033[1;31m======================================================================\033[0m"
+            echo -e "\033[1;31m[ERROR] El alias '${new_alias}' ya esta registrado por otro estudiante.\033[0m"
+            if [ -n "${input_pin}" ]; then
+                echo -e "\033[1;31m[ERROR] El PIN introducido no coincide.\033[0m"
+            fi
+            echo ""
+            echo -e "\033[1;33mSi eres el propietario de este alias y quieres reanudar tu sesion:\033[0m"
+            echo -e "    score resume ${new_alias} <tu_pin>"
+            echo ""
+            echo -e "\033[1;33mSi eres un nuevo estudiante, elige otro nombre:\033[0m"
+            echo -e "    score register ${new_alias}-2"
+            echo -e "\033[1;31m======================================================================\033[0m"
+            echo ""
+            return 1
+        fi
     fi
+
+    # -------------------------------------------------------------
+    # CASE 2: The alias does NOT exist in the database
+    # -------------------------------------------------------------
+    if [ "${mode}" = "resume" ]; then
+        echo -e "\033[1;31m[ERROR] El alias '${new_alias}' no se encuentra en el marcador.\033[0m"
+        echo -e "\033[1;33mPara registrarte por primera vez ejecuta:\033[0m"
+        echo -e "    score register ${new_alias}"
+        return 1
+    fi
+
+    # Assign PIN (either provided or generated)
+    local assigned_pin="${input_pin}"
+    if [ -z "${assigned_pin}" ]; then
+        # Check if local state already has a pin
+        if [ -f "${STATE_FILE}" ]; then
+            assigned_pin=$(jq -r '.pin // empty' "${STATE_FILE}" 2>/dev/null)
+        fi
+        if [ -z "${assigned_pin}" ]; then
+            assigned_pin=$(shuf -i 1000-9999 -n 1 2>/dev/null || echo $((1000 + RANDOM % 9000)))
+        fi
+    fi
+    local assigned_hash
+    assigned_hash=$(get_hash "${assigned_pin}")
 
     local rand_suffix
     rand_suffix=$(head -c 3 /dev/urandom | xxd -p 2>/dev/null || echo "$RANDOM")
@@ -289,15 +394,21 @@ register_alias() {
 
     if [ -f "${STATE_FILE}" ]; then
         local tmp_json
-        tmp_json=$(jq --arg a "${new_alias}" --arg id "${new_student_id}" '.alias = $a | .studentId = $id | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' "${STATE_FILE}")
+        tmp_json=$(jq \
+            --arg a "${new_alias}" \
+            --arg id "${new_student_id}" \
+            --arg p "${assigned_pin}" \
+            --arg ph "${assigned_hash}" \
+            '.alias = $a | .studentId = $id | .pin = $p | .pinHash = $ph | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' \
+            "${STATE_FILE}")
         echo "${tmp_json}" > "${STATE_FILE}"
     else
-        init_session "${new_alias}"
+        init_session "${new_alias}" "${assigned_pin}"
     fi
 
     # Delete previous node from Firebase so operative does not appear duplicated on scoreboard
-    if [ -n "${old_student_id}" ] && [ "${old_student_id}" != "${new_student_id}" ]; then
-        local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${old_student_id}.json"
+    if [ -n "${current_student_id}" ] && [ "${current_student_id}" != "${new_student_id}" ]; then
+        local old_endpoint="${FIREBASE_DATABASE_URL%/}/workshops/${WORKSHOP_ID}/students/${current_student_id}.json"
         curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
     fi
 
@@ -305,19 +416,23 @@ register_alias() {
 
     echo ""
     echo -e "\033[1;32m======================================================================\033[0m"
-    echo -e "\033[1;32m[✔] Scoreboard Call Sign registered: ${new_alias}\033[0m"
-    echo -e "\033[1;36m[ℹ] Live Leaderboard: ${LEADERBOARD_URL}\033[0m"
+    echo -e "\033[1;32m[OK] Operativo registrado en el marcador: ${new_alias}\033[0m"
+    echo -e "\033[1;36m[PIN] Tu PIN de sesion: ${assigned_pin}\033[0m"
+    echo -e "\033[0;37m(Guarda tu PIN si cambias de terminal o reinicias la sesion: score resume ${new_alias} ${assigned_pin})\033[0m"
+    echo -e "\033[1;33m[LEADERBOARD] Marcador en vivo: ${LEADERBOARD_URL}\033[0m"
     echo -e "\033[1;32m======================================================================\033[0m"
     echo ""
 }
 
 show_status() {
     ensure_session
-    local a s c
-    a=$(jq -r '.alias' "${STATE_FILE}")
-    s=$(jq -r '.totalScore' "${STATE_FILE}")
-    c=$(jq -r '.completedChallenges' "${STATE_FILE}")
-    echo -e "\033[1;36m[OPERATIVE] ${a} | Score: ${s}/1000 pts (Bonus: up to 1250) | Solved: ${c}/4 Challenges $([ ${c} -ge 5 ] && echo '(★ ÉLITE)')\033[0m"
+    local a s c p
+    a=$(jq -r '.alias // "Desconocido"' "${STATE_FILE}")
+    s=$(jq -r '.totalScore // 0' "${STATE_FILE}")
+    c=$(jq -r '.completedChallenges // 0' "${STATE_FILE}")
+    p=$(jq -r '.pin // "No definido"' "${STATE_FILE}")
+    echo -e "\033[1;36m[OPERATIVO]   ${a} (PIN: ${p})\033[0m"
+    echo -e "\033[1;36m[PUNTUACION]  ${s}/1000 pts (Bonus max: 1250) | Retos: ${c}/4 $([ ${c} -ge 5 ] && echo '(ELITE)')\033[0m"
     echo -e "\033[1;33m[LEADERBOARD] ${LEADERBOARD_URL}\033[0m"
 }
 
@@ -325,10 +440,13 @@ show_status() {
 ACTION="${1:-}"
 case "${ACTION}" in
     init)
-        init_session "$2"
+        init_session "$2" "$3"
         ;;
-    register|alias|resume)
-        register_alias "$2"
+    register|alias)
+        register_alias "$2" "$3" "register"
+        ;;
+    resume)
+        register_alias "$2" "$3" "resume"
         ;;
     hint)
         record_hint "$2" "$3" "$4"
@@ -346,6 +464,6 @@ case "${ACTION}" in
         show_status
         ;;
     *)
-        echo "Usage: score {register <name> | resume <name> | status | hint <step> | verify <step> <pts>}"
+        echo "Uso: score {register <nombre> [pin] | resume <nombre> <pin> | status | hint <paso> | verify <paso> <pts>}"
         ;;
 esac
