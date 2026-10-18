@@ -44,11 +44,6 @@
       },
       {
         "file": "evidence/backdoor_implant.sh",
-        "target": "/evidence/",
-        "chmod": "+x"
-      },
-      {
-        "file": "evidence/backdoor_implant.sh",
         "target": "/assets/evidence/",
         "chmod": "+x"
       },

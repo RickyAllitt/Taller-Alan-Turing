@@ -13,16 +13,11 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Ensure sample exists
+# Check if forensic sample has been extracted from OverlayFS UpperDir
 if [ ! -f "${TARGET_SAMPLE}" ]; then
-    if [ -f "/assets/evidence/backdoor_implant.sh" ]; then
-        mkdir -p /evidence
-        cp /assets/evidence/backdoor_implant.sh "${TARGET_SAMPLE}"
-        chmod 755 "${TARGET_SAMPLE}"
-    else
-        echo -e "${RED}[ERROR] Falta la muestra forense objetivo: ${TARGET_SAMPLE}${NC}"
-        exit 1
-    fi
+    echo -e "${RED}[FALLO] Muestra forense no encontrada en: ${TARGET_SAMPLE}${NC}"
+    echo -e "${YELLOW}[PISTA] Debes localizar el implante dentro de la capa mutable (UpperDir) del contenedor cicd_runner_pipeline mediante 'docker inspect' y copiarlo a /evidence/backdoor_implant.sh antes de formular tu regla YARA.${NC}"
+    exit 1
 fi
 
 # Ensure yara tool is installed
