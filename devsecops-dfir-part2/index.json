@@ -53,16 +53,6 @@
         "chmod": "+x"
       },
       {
-        "file": "step1/verify.sh",
-        "target": "/step1/",
-        "chmod": "+x"
-      },
-      {
-        "file": "step2/verify.sh",
-        "target": "/step2/",
-        "chmod": "+x"
-      },
-      {
         "file": "step3/verify.sh",
         "target": "/step3/",
         "chmod": "+x"
@@ -112,16 +102,6 @@
       {
         "file": "evidence/backdoor_implant.sh",
         "target": "/assets/evidence/",
-        "chmod": "+x"
-      },
-      {
-        "file": "step1/verify.sh",
-        "target": "/step1/",
-        "chmod": "+x"
-      },
-      {
-        "file": "step2/verify.sh",
-        "target": "/step2/",
         "chmod": "+x"
       },
       {

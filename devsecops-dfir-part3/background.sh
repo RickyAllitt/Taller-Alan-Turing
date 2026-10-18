@@ -7,8 +7,8 @@
 exec > /var/log/killercoda_background.log 2>&1
 set -x
 
-# Remove any stale markers
-rm -f /tmp/killercoda_ready /tmp/killercoda_failed
+# Remove any stale markers and residual flags
+rm -f /tmp/killercoda_ready /tmp/killercoda_failed /root/host_flag.txt /root/flag*.txt /tmp/flag*.txt 2>/dev/null || true
 
 # Error handling trap
 cleanup_trap() {
