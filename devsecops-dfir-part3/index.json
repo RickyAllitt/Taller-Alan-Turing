@@ -1,0 +1,95 @@
+{
+  "title": "Parte 3: DevSecOps Shift-Left & Supply Chain Trust (Bonus Track)",
+  "description": "Desafío avanzado y bonus del taller CPIFP Alan Turing: Auditoría de vulnerabilidades con Trivy, detección de secretos en capas y firma criptográfica con Cosign.",
+  "difficulty": "Intermediate",
+  "time": "35 minutes",
+  "details": {
+    "intro": {
+      "text": "intro.md",
+      "background": "background.sh",
+      "foreground": "foreground.sh"
+    },
+    "steps": [
+      {
+        "title": "Desafío 5 (Bonus): Auditoría con Trivy y Firma Criptográfica con Cosign",
+        "text": "step5.md",
+        "verify": "step5/verify.sh"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "assets": {
+    "host01": [
+      {
+        "file": "step5/verify.sh",
+        "target": "/step5/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/shift-left/Dockerfile.vulnerable",
+        "target": "/root/shift-left/",
+        "chmod": "+r"
+      },
+      {
+        "file": "assets/shift-left/app.sh",
+        "target": "/root/shift-left/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ],
+    "host0": [
+      {
+        "file": "step5/verify.sh",
+        "target": "/step5/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/shift-left/Dockerfile.vulnerable",
+        "target": "/root/shift-left/",
+        "chmod": "+r"
+      },
+      {
+        "file": "assets/shift-left/app.sh",
+        "target": "/root/shift-left/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/score_client.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/hint.sh",
+        "target": "/assets/scoring/",
+        "chmod": "+x"
+      },
+      {
+        "file": "assets/scoring/config.env",
+        "target": "/assets/scoring/",
+        "chmod": "+rw"
+      }
+    ]
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  },
+  "interface": {
+    "layout": "split"
+  }
+}

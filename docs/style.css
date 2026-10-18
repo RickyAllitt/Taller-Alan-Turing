@@ -763,3 +763,55 @@ footer a:hover {
     max-width: 100%;
   }
 }
+
+/* Bonus Track & Élite Operative Badging */
+.elite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(168, 85, 247, 0.25));
+  border: 1px solid rgba(234, 179, 8, 0.6);
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #facc15;
+  box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+  margin-left: 6px;
+  vertical-align: middle;
+  animation: pulse-glow 3s infinite alternate;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px rgba(234, 179, 8, 0.2); }
+  100% { box-shadow: 0 0 14px rgba(234, 179, 8, 0.45); }
+}
+
+.matrix-step.bonus {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.matrix-step.bonus.completed {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.85);
+  color: #e9d5ff;
+}
+
+.matrix-step.bonus.completed .step-pts {
+  color: #facc15;
+  font-weight: 700;
+}
+
+.score-progress-fill.elite {
+  background: linear-gradient(90deg, #00f0ff, #a855f7, #facc15);
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.5);
+}
+
+.filter-btn[data-status="elite"].active,
+.filter-btn[data-status="elite"]:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+  color: #facc15;
+}
+

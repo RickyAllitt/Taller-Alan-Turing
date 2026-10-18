@@ -58,7 +58,8 @@ init_session() {
     "step1": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
     "step2": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
     "step3": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
-    "step4": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }
+    "step4": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] },
+    "step5": { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] }
   }
 }
 EOF
@@ -92,7 +93,7 @@ sync_to_firebase() {
 }
 
 # Record consumed hint
-# Arguments: <step_number 1..4> <tier_number 1..3> <penalty_points>
+# Arguments: <step_number 1..5> <tier_number 1..3> <penalty_points>
 record_hint() {
     local step_num="$1"
     local tier_num="$2"
@@ -128,7 +129,7 @@ is_hint_unlocked() {
 }
 
 # Complete challenge and award points
-# Arguments: <step_number 1..4> <base_points> <penalty_per_hint_json_or_array>
+# Arguments: <step_number 1..5> <base_points>
 complete_challenge() {
     local step_num="$1"
     local base_points="$2"
@@ -151,6 +152,7 @@ complete_challenge() {
     # Step 2: Tier 1: 30, Tier 2: 60
     # Step 3: Tier 1: 25, Tier 2: 50, Tier 3: 75
     # Step 4: Tier 1: 30, Tier 2: 60
+    # Step 5: Tier 1: 25, Tier 2: 50
     local penalty=0
     local hints_taken
     hints_taken=$(jq -c ".challenges.${step_key}.hintsTaken // []" "${STATE_FILE}" 2>/dev/null)
@@ -167,6 +169,8 @@ complete_challenge() {
             "3_3") penalty=$((penalty + 75)) ;;
             "4_1") penalty=$((penalty + 30)) ;;
             "4_2") penalty=$((penalty + 60)) ;;
+            "5_1") penalty=$((penalty + 25)) ;;
+            "5_2") penalty=$((penalty + 50)) ;;
         esac
     done
 
@@ -183,7 +187,7 @@ complete_challenge() {
          .challenges.${step_key}.score = \$score |
          .completedChallenges = ([.challenges[] | select(.completed == true)] | length) |
          .totalScore = ([.challenges[].score] | add) |
-         .status = (if ([.challenges[] | select(.completed == true)] | length) == 4 then \"completed\" else \"in_progress\" end)" \
+         .status = (if ([.challenges[] | select(.completed == true)] | length) >= 4 then \"completed\" else \"in_progress\" end)" \
         "${STATE_FILE}")
 
     echo "${tmp_json}" > "${STATE_FILE}"
@@ -200,7 +204,7 @@ complete_challenge() {
     echo ""
     echo -e "\033[1;32m======================================================================\033[0m"
     echo -e "\033[1;32m[TELEMETRY] Challenge ${step_num} Solved: +${net_score} Points Awarded (Base: ${base_points}, Hints Penalty: -${penalty})\033[0m"
-    echo -e "\033[1;36m[OPERATIVE] ${alias} | Total Score: ${total_score} pts | Progress: ${completed_count}/4 Challenges\033[0m"
+    echo -e "\033[1;36m[OPERATIVE] ${alias} | Total Score: ${total_score} pts | Solved: ${completed_count} Challenges $([ ${completed_count} -ge 5 ] && echo '(★ ÉLITE)')\033[0m"
     echo -e "\033[1;36m[TIMESTAMP] ${now} (Spanish Local Time)\033[0m"
     echo -e "\033[1;33m[LEADERBOARD] Realtime Standings: ${LEADERBOARD_URL}\033[0m"
     echo -e "\033[1;32m======================================================================\033[0m"
@@ -248,7 +252,8 @@ register_alias() {
                     curl -s --connect-timeout 4 --max-time 6 -X DELETE "${old_endpoint}" >/dev/null 2>&1 || true
                 fi
 
-                echo "${existing_val}" | jq '.' > "${STATE_FILE}"
+                # Restore previous session and ensure step5 object exists
+                echo "${existing_val}" | jq '.challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' > "${STATE_FILE}"
                 chmod 666 "${STATE_FILE}" 2>/dev/null || true
 
                 local cur_score
@@ -274,7 +279,7 @@ register_alias() {
 
     if [ -f "${STATE_FILE}" ]; then
         local tmp_json
-        tmp_json=$(jq --arg a "${new_alias}" --arg id "${new_student_id}" '.alias = $a | .studentId = $id' "${STATE_FILE}")
+        tmp_json=$(jq --arg a "${new_alias}" --arg id "${new_student_id}" '.alias = $a | .studentId = $id | .challenges.step5 = (.challenges.step5 // { "completed": false, "score": 0, "completedAt": null, "hintsTaken": [] })' "${STATE_FILE}")
         echo "${tmp_json}" > "${STATE_FILE}"
     else
         init_session "${new_alias}"
@@ -302,7 +307,7 @@ show_status() {
     a=$(jq -r '.alias' "${STATE_FILE}")
     s=$(jq -r '.totalScore' "${STATE_FILE}")
     c=$(jq -r '.completedChallenges' "${STATE_FILE}")
-    echo -e "\033[1;36m[OPERATIVE] ${a} | Score: ${s}/1000 pts | Solved: ${c}/4 Challenges\033[0m"
+    echo -e "\033[1;36m[OPERATIVE] ${a} | Score: ${s}/1000 pts (Bonus: up to 1250) | Solved: ${c}/4 Challenges $([ ${c} -ge 5 ] && echo '(★ ÉLITE)')\033[0m"
     echo -e "\033[1;33m[LEADERBOARD] ${LEADERBOARD_URL}\033[0m"
 }
 
@@ -321,7 +326,7 @@ case "${ACTION}" in
     is_unlocked)
         is_hint_unlocked "$2" "$3"
         ;;
-    complete)
+    complete|verify)
         complete_challenge "$2" "$3"
         ;;
     sync)
@@ -331,6 +336,6 @@ case "${ACTION}" in
         show_status
         ;;
     *)
-        echo "Usage: score {register <name> | resume <name> | status | hint <step>}"
+        echo "Usage: score {register <name> | resume <name> | status | hint <step> | verify <step> <pts>}"
         ;;
 esac

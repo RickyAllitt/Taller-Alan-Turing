@@ -9,5 +9,6 @@ export const DEFAULT_CONFIG = {
   workshopTitle: "CPIFP Alan Turing - DevSecOps & Container DFIR",
   cohortName: "Curso de Especialización en Ciberseguridad",
   totalBaseScore: 1000,
+  maxBonusScore: 1250,
   refreshIntervalMs: 5000
 };

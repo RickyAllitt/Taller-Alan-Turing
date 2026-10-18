@@ -1,0 +1,14 @@
+FROM alpine:3.15
+# Vulnerable base image with known CVEs, hardcoded production secrets, runs as root
+
+# Secretos incrustados en la imagen (Mala práctica crítica en Supply Chain)
+ENV PROD_DB_PASSWORD="Turing_Prod_P@ssw0rd_9921!"
+ENV PAYMENT_API_KEY="sk_live_51M0AlanTuringCyberKeySuperSecret_X99"
+
+RUN apk update && apk add --no-cache curl wget bash
+
+WORKDIR /app
+COPY app.sh /app/app.sh
+RUN chmod +x /app/app.sh
+
+CMD ["/app/app.sh"]

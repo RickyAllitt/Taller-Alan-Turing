@@ -56,13 +56,20 @@ Este escenario sumerge a los estudiantes en un entorno práctico de 75 minutos e
 │   ├── step1.md y step2.md                # Retos 1 (Inyección CI/CD) y 2 (Escape Docker Socket)
 │   ├── step1/ y step2/                    # Scripts de verificación y scoring
 │   └── assets/                            # Recursos, scoring client y pistas
-└── devsecops-dfir-part2/                  # Escenario Parte 2 (Defensiva: Retos 3 y 4 - 40 min)
-    ├── index.json                         # Manifiesto de Killercoda Parte 2
-    ├── background.sh / foreground.sh      # Aprovisionamiento y sincronización de sesión
-    ├── intro.md / finish.md               # Briefing y post-mortem final
-    ├── step3.md y step4.md                # Retos 3 (Triaje OverlayFS + YARA) y 4 (Bastionado CIS)
-    ├── step3/ y step4/                    # Scripts de verificación y scoring
-    └── assets/                            # Recursos, scoring client y pistas
+├── devsecops-dfir-part2/                  # Escenario Parte 2 (Defensiva: Retos 3 y 4 - 40 min)
+│   ├── index.json                         # Manifiesto de Killercoda Parte 2
+│   ├── background.sh / foreground.sh      # Aprovisionamiento y sincronización de sesión
+│   ├── intro.md / finish.md               # Briefing y post-mortem final
+│   ├── step3.md y step4.md                # Retos 3 (Triaje OverlayFS + YARA) y 4 (Bastionado CIS)
+│   ├── step3/ y step4/                    # Scripts de verificación y scoring
+│   └── assets/                            # Recursos, scoring client y pistas
+└── devsecops-dfir-part3/                  # Escenario Parte 3 (Bonus Track: Reto 5 - 35 min)
+    ├── index.json                         # Manifiesto de Killercoda Parte 3
+    ├── background.sh / foreground.sh      # Aprovisionamiento (Trivy, Cosign, registry) y sesión
+    ├── intro.md / finish.md               # Briefing y post-mortem de arquitectura Zero Trust
+    ├── step5.md                           # Reto 5 (Auditoría Trivy y Firma Cosign)
+    ├── step5/verify.sh                    # Script de verificación y scoring
+    └── assets/                            # Recursos, Dockerfile vulnerable y scoring client
 ```
 
 ---

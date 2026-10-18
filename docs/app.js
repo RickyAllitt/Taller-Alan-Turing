@@ -217,7 +217,7 @@ function processStudents() {
     const ch = item.challenges || {};
 
     let totalHints = 0;
-    ['step1', 'step2', 'step3', 'step4'].forEach((step) => {
+    ['step1', 'step2', 'step3', 'step4', 'step5'].forEach((step) => {
       if (ch[step] && Array.isArray(ch[step].hintsTaken)) {
         totalHints += ch[step].hintsTaken.length;
       }
@@ -260,7 +260,7 @@ function renderMetrics(students) {
   const topScore = Math.max(...students.map(s => s.totalScore));
   const totalScoreSum = students.reduce((acc, s) => acc + s.totalScore, 0);
   const avgScore = Math.round(totalScoreSum / totalOperatives);
-  const completedCount = students.filter(s => s.completedChallenges === 4).length;
+  const completedCount = students.filter(s => s.completedChallenges >= 4).length;
 
   elements.metricTopScore.textContent = topScore;
   elements.metricAvgScore.textContent = avgScore;
@@ -276,7 +276,8 @@ function renderFirstBlood(students) {
     { key: 'step1', name: 'Step 1: Memory Leak' },
     { key: 'step2', name: 'Step 2: Socket Breakout' },
     { key: 'step3', name: 'Step 3: DFIR YARA' },
-    { key: 'step4', name: 'Step 4: CIS Hardening' }
+    { key: 'step4', name: 'Step 4: CIS Hardening' },
+    { key: 'step5', name: 'Bonus: Cosign Trust' }
   ];
 
   elements.firstBloodGrid.innerHTML = '';
@@ -317,7 +318,8 @@ function renderDashboard() {
   const filtered = students.filter(s => {
     const matchesFilter = 
       filterStatus === 'all' ? true :
-      filterStatus === 'completed' ? s.completedChallenges === 4 :
+      filterStatus === 'completed' ? s.completedChallenges >= 4 :
+      filterStatus === 'elite' ? (s.challenges.step5 && s.challenges.step5.completed) :
       filterStatus === 'in_progress' ? s.completedChallenges < 4 : true;
 
     const matchesSearch = s.alias.toLowerCase().includes(searchQuery.toLowerCase());
@@ -344,10 +346,11 @@ function renderDashboard() {
     const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : '';
     const initials = s.alias.slice(0, 2).toUpperCase();
     const progressPercent = Math.min(100, Math.round((s.totalScore / activeConfig.totalBaseScore) * 100));
+    const isElite = !!(s.challenges.step5 && s.challenges.step5.completed);
 
     // Get last completed challenge timestamp
     let lastTime = s.registeredAt;
-    ['step4', 'step3', 'step2', 'step1'].some(step => {
+    ['step5', 'step4', 'step3', 'step2', 'step1'].some(step => {
       if (s.challenges[step] && s.challenges[step].completed && s.challenges[step].completedAt) {
         lastTime = s.challenges[step].completedAt;
         return true;
@@ -356,14 +359,14 @@ function renderDashboard() {
     });
 
     // Step Matrix HTML
-    const renderStepBadge = (stepKey, label) => {
+    const renderStepBadge = (stepKey, label, isBonus = false) => {
       const ch = s.challenges[stepKey] || {};
       const isDone = ch.completed === true;
       const pts = ch.score !== undefined ? `${ch.score}p` : '--';
       const hints = ch.hintsTaken && ch.hintsTaken.length > 0 ? `H:${ch.hintsTaken.length}` : '';
 
       return `
-        <div class="matrix-step ${isDone ? 'completed' : ''}" title="${label}">
+        <div class="matrix-step ${isBonus ? 'bonus' : ''} ${isDone ? 'completed' : ''}" title="${label}">
           <span>${label}</span>
           <span class="step-pts">${isDone ? pts : '--'}</span>
           ${hints ? `<span class="hint-tag">${hints}</span>` : ''}
@@ -378,18 +381,21 @@ function renderDashboard() {
       </td>
       <td>
         <div class="operative-cell">
-          <div class="operative-avatar">${initials}</div>
+          <div class="operative-avatar" style="${isElite ? 'border-color: #facc15; box-shadow: 0 0 10px rgba(250, 204, 21, 0.4);' : ''}">${initials}</div>
           <div>
-            <div class="operative-alias">${escapeHtml(s.alias)}</div>
+            <div class="operative-alias">
+              ${escapeHtml(s.alias)}
+              ${isElite ? '<span class="elite-badge" title="Reto Bonus Superado (+250 pts)">★ ÉLITE</span>' : ''}
+            </div>
             <div class="operative-registered">Reg: ${escapeHtml(s.registeredAt)}</div>
           </div>
         </div>
       </td>
       <td>
         <div class="score-cell">
-          <span class="score-main">${s.totalScore}</span> <span style="font-size: 0.75rem; color: var(--text-muted);">/ 1000</span>
+          <span class="score-main" style="${s.totalScore > 1000 ? 'color: #facc15;' : ''}">${s.totalScore}</span> <span style="font-size: 0.75rem; color: var(--text-muted);">/ 1000</span>
           <div class="score-progress-bar">
-            <div class="score-progress-fill" style="width: ${progressPercent}%;"></div>
+            <div class="score-progress-fill ${isElite ? 'elite' : ''}" style="width: ${progressPercent}%;"></div>
           </div>
         </div>
       </td>
@@ -399,6 +405,7 @@ function renderDashboard() {
           ${renderStepBadge('step2', 'Ch 2')}
           ${renderStepBadge('step3', 'Ch 3')}
           ${renderStepBadge('step4', 'Ch 4')}
+          ${renderStepBadge('step5', 'Bonus', true)}
         </div>
       </td>
       <td>
@@ -410,8 +417,8 @@ function renderDashboard() {
         ${escapeHtml(lastTime)}
       </td>
       <td>
-        <span class="status-tag ${s.completedChallenges === 4 ? 'completed' : 'in-progress'}">
-          ${s.completedChallenges === 4 ? 'Completed' : 'In Progress'}
+        <span class="status-tag ${s.completedChallenges >= 5 ? 'completed' : s.completedChallenges >= 4 ? 'completed' : 'in-progress'}" style="${s.completedChallenges >= 5 ? 'background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #facc15;' : ''}">
+          ${s.completedChallenges >= 5 ? '★ Élite (5/5)' : s.completedChallenges >= 4 ? 'Completed (4/4)' : `In Progress (${s.completedChallenges}/4)`}
         </span>
       </td>
     `;

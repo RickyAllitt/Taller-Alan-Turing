@@ -7,6 +7,9 @@
             },
             {
                 "path": "devsecops-dfir-part2"
+            },
+            {
+                "path": "devsecops-dfir-part3"
             }
         ]
     }

@@ -22,6 +22,7 @@ show_usage() {
     echo "  hint 2  - Desafío 2: Fuga de Contenedor vía Socket de Docker"
     echo "  hint 3  - Desafío 3: Triaje en OverlayFS y Caza de Amenazas con YARA"
     echo "  hint 4  - Desafío 4: Bastionado de Producción según CIS Benchmark"
+    echo "  hint 5  - Desafío 5 (Bonus): Auditoría con Trivy y Firma con Cosign"
     echo ""
     echo "Aviso: Desbloquear pistas restará puntos de tu puntuación final."
     echo "======================================================================"
@@ -30,8 +31,8 @@ show_usage() {
 
 [ -z "${STEP}" ] && show_usage
 
-if ! [[ "${STEP}" =~ ^[1-4]$ ]]; then
-    echo "Error: Paso '${STEP}' no válido. Debe ser 1, 2, 3 o 4."
+if ! [[ "${STEP}" =~ ^[1-5]$ ]]; then
+    echo "Error: Paso '${STEP}' no válido. Debe ser 1, 2, 3, 4 o 5."
     exit 1
 fi
 
@@ -123,6 +124,14 @@ case "${STEP}" in
             "Remediaciones en Compose: En /assets/docker-compose.hardened.yml:\n  1. Elimina la entrada de volumen '- /var/run/docker.sock:/var/run/docker.sock'\n  2. Define usuario sin privilegios: user: \"10001:10001\"\n  3. Habilita el sistema de ficheros de sólo lectura: read_only: true"
         prompt_unlock 4 2 60 \
             "Directivas de Privilegios y Almacenamiento:\n  4. Elimina capacidades del kernel: cap_drop: [\"ALL\"]\n  5. Bloquea escaladas de privilegios: security_opt: [\"no-new-privileges:true\"]\n  6. Asigna almacenamiento volátil en memoria para /tmp:\n     tmpfs: [\"/tmp:rw,noexec,nosuid,size=64m\"]\nDespliega con: docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate"
+        ;;
+    5)
+        echo "Desafío 5 (Bonus): Auditoría con Trivy y Firma con Cosign (Base: 250 pts)"
+        echo ""
+        prompt_unlock 5 1 25 \
+            "Pista de Auditoría Shift-Left (Trivy):\nPara escanear vulnerabilidades críticas y secretos en la imagen del registro local:\n  trivy image --severity CRITICAL localhost:5000/victim-service:v1.0\n  trivy image --scanners secret localhost:5000/victim-service:v1.0\nEn tu Dockerfile.hardened debes usar una base segura (ej. alpine:3.20), eliminar las variables de entorno de credenciales y añadir un USER no privilegiado."
+        prompt_unlock 5 2 50 \
+            "Pista de Firma y Verificación Criptográfica (Cosign):\nGenera el par de claves sin contraseña interactiva:\n  cd /root/shift-left\n  COSIGN_PASSWORD=\"\" cosign generate-key-pair\nConstruye y sube tu imagen remediada:\n  docker build -t localhost:5000/victim-service:hardened -f Dockerfile.hardened .\n  docker push localhost:5000/victim-service:hardened\nFirma criptográficamente la imagen:\n  COSIGN_PASSWORD=\"\" cosign sign --yes --key cosign.key localhost:5000/victim-service:hardened\nVerifícala con:\n  cosign verify --key cosign.pub localhost:5000/victim-service:hardened"
         ;;
 esac
 
