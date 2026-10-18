@@ -1,5 +1,7 @@
 # Ignore markdown documentation files
 CONTEXT.md
+TEORIA_TALLER.md
+GUIA_SOLUCIONES_PROFESOR.md
 
 # OS & Editor artifacts
 .DS_Store
