@@ -32,40 +32,9 @@ Este escenario sumerge a los estudiantes en un entorno práctico de 75 minutos e
 
 ## 🌐 Leaderboard en GitHub Pages (`/docs`)
 
-El panel de clasificación en tiempo real se encuentra en la carpeta [`docs/`](docs/) listo para ser publicado mediante GitHub Pages:
-
 - **URL de Producción**: [https://rickyallitt.github.io/Taller-Alan-Turing](https://rickyallitt.github.io/Taller-Alan-Turing)
 - **Tecnología**: HTML5, Vanilla CSS (estética Cyberpunk/Dark Mode), Vanilla JavaScript con sincronización Server-Sent Events (SSE) hacia Firebase Realtime Database.
 - **Métricas**: Ranking de alumnos, tiempos de finalización en hora española, insignias por reto, conteo de pistas consumidas y cuadro de honor "First Blood" (resolución más rápida por reto).
-
----
-
-## ⚙️ Configuración de Firebase Realtime Database
-
-1. Crea un proyecto en [Firebase Console](https://console.firebase.google.com/).
-2. En la sección **Build > Realtime Database**, crea una base de datos en modo prueba o personalizada.
-3. Ve a la pestaña **Rules** y pega las reglas de seguridad de [`firebase-rules.json`](firebase-rules.json):
-   ```json
-   {
-     "rules": {
-       "workshops": {
-         "$workshop_id": {
-           ".read": true,
-           "students": {
-             "$student_id": {
-               ".write": true,
-               ".validate": "newData.hasChildren(['alias', 'registeredAt', 'totalScore']) && newData.child('alias').isString() && newData.child('alias').val().length >= 2 && newData.child('alias').val().length <= 25 && newData.child('totalScore').isNumber() && newData.child('totalScore').val() >= 0 && newData.child('totalScore').val() <= 1000 && (!data.exists() || newData.child('alias').val() == data.child('alias').val()) && (!data.exists() || newData.child('totalScore').val() >= data.child('totalScore').val())"
-             }
-           }
-         }
-       }
-     }
-   }
-   ```
-4. La URL de la base de datos ya está configurada con la instancia activa (`https://bootcamp-ac825-default-rtdb.europe-west1.firebasedatabase.app`) en:
-   - [`devsecops-dfir-part1/assets/scoring/config.env`](devsecops-dfir-part1/assets/scoring/config.env) y Part 2 (`FIREBASE_DATABASE_URL`)
-   - [`docs/config.js`](docs/config.js) (`databaseURL`)
-   *(O configúralo directamente desde el navegador haciendo clic en el botón "DB Settings" del Leaderboard)*.
 
 ---
 
@@ -97,10 +66,3 @@ El panel de clasificación en tiempo real se encuentra en la carpeta [`docs/`](d
 ```
 
 ---
-
-## 🚀 Despliegue en Killercoda
-
-1. Vincula este repositorio con tu cuenta y perfil de creador en [Killercoda](https://killercoda.com/).
-2. Asegúrate de activar **GitHub Pages** en la configuración del repositorio (`Settings > Pages > Source: Deploy from a branch > Branch: master, Folder: /docs`).
-3. Al iniciar el escenario, `background.sh` aprovisionará silenciosamente el entorno e instalará `hint` en el sistema.
-4. El estudiante introduce su alias en `foreground.sh` y sus avances se reflejan en tiempo real en la web del Leaderboard.
