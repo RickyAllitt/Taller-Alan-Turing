@@ -20,7 +20,7 @@ En este ejercicio operativo deberás realizar la reconstrucción ofensiva de la 
 | Sistema Host (Ubuntu 22.04 LTS / Entorno Host)                                    |
 |                                                                                   |
 |  Artefactos en el Sistema de Ficheros                                             |
-|    /root/host_flag.txt               Objetivo de integridad de root (Desafío 2)   |
+|    /root/.host_flag.txt              Objetivo de integridad de root (Desafío 2)   |
 |    /evidence/backdoor_implant.sh     Artefacto malicioso recuperado (Desafío 3)   |
 |    /assets/docker-compose.yml        Manifiesto vulnerable original (Desafío 4)   |
 |                                                                                   |
@@ -49,8 +49,8 @@ La **Parte 1** comprende dos fases ofensivas consecutivas evaluadas sobre **450 
 
 | Fase | Enfoque Técnico | Tiempo Estimado | Puntuación Base | Penalización por Pistas Tácticas |
 | :--- | :--- | :---: | :---: | :--- |
-| **Desafío 1** | Extracción de Credenciales en Memoria | 12 - 15 min | 200 pts | Nivel 1: -25 pts &bull; Nivel 2: -50 pts |
-| **Desafío 2** | Fuga de Contenedor vía Socket UNIX | 15 - 18 min | 250 pts | Nivel 1: -30 pts &bull; Nivel 2: -60 pts |
+| **Desafío 1** | Extracción de Credenciales en Memoria | 5 - 12 min | 200 pts | Nivel 1: -25 pts &bull; Nivel 2: -50 pts |
+| **Desafío 2** | Fuga de Contenedor vía Socket UNIX | 10 - 15 min | 250 pts | Nivel 1: -30 pts &bull; Nivel 2: -60 pts |
 
 *Nota: Al completar ambos desafíos obtendrás 450 puntos. A continuación, iniciarás la **Parte 2: Triaje Forense y Bastionado** para completar los 550 puntos restantes (1.000 pts en total).*
 

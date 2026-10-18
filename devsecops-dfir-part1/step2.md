@@ -42,7 +42,7 @@ La arquitectura de Docker está desacoplada entre una interfaz de línea de coma
 2. Confirmar la comunicación con la API del demonio Docker del host utilizando el cliente CLI interno del contenedor.
 3. Formular e iniciar un contenedor auxiliar sin restricciones que monte mediante *bind-mount* el sistema de ficheros raíz del host (`/`).
 4. Cambiar el contexto de ejecución al sistema de ficheros del host utilizando `chroot(2)` o navegación directa de rutas.
-5. Recuperar la flag administrativa del host ubicada en `/root/host_flag.txt`.
+5. Recuperar la flag administrativa del host ubicada en `/root/.host_flag.txt`.
 6. Finalizar la sesión de escape y guardar el token recuperado en `/tmp/flag2.txt` en el host.
 
 ---
@@ -59,7 +59,7 @@ Para escapar del espacio de nombres de montaje aislado del runner, construye un 
 - **Contexto de Ejecución:** Inicia una shell interactiva en el contenedor auxiliar. Para interactuar directamente con el sistema operativo host, ejecuta `chroot(8)` contra el directorio montado para redefinir la raíz aparente del proceso de la subshell. De forma alternativa, puedes explorar primitivas de cambio de namespaces con `nsenter(1)`.
 
 ### 3. Extracción de la Flag del Host
-Una vez situado en el contexto del sistema de ficheros del host, visualiza el contenido de `/root/host_flag.txt` y copia la cadena completa de la flag.
+Una vez situado en el contexto del sistema de ficheros del host, visualiza el contenido de `/root/.host_flag.txt` y copia la cadena completa de la flag.
 
 ### 4. Limpieza y Persistencia del Entregable
 Sal del contenedor auxiliar y de la sesión interactiva del runner. En la terminal del host, almacena la flag capturada en `/tmp/flag2.txt`:

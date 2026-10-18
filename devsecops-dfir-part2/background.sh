@@ -46,7 +46,7 @@ apt-get install -y --no-install-recommends yara jq
 
 # 3. Clean up any residual flags from earlier scenarios
 echo "[CLEANUP] Removing residual flags from previous scenarios..."
-rm -f /root/host_flag.txt /root/flag*.txt /tmp/flag*.txt 2>/dev/null || true
+rm -f /root/host_flag.txt /root/.host_flag.txt /root/flag*.txt /tmp/flag*.txt 2>/dev/null || true
 
 # 4. Synchronize assets and evidence directories
 echo "[ASSETS] Preparing scenario paths..."
@@ -97,15 +97,23 @@ COPY pipeline_runner.sh /app/pipeline_runner.sh
 RUN chmod 755 /app/pipeline_runner.sh
 RUN addgroup -g 10001 -S cicdgroup && \
     adduser -u 10001 -S cicduser -G cicdgroup
-ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='${DYNAMIC_FLAG1}' exec /app/pipeline_runner.sh"]
+ENTRYPOINT ["/bin/sh", "-c", "DEPLOY_PRODUCTION_KEY='FLAG{DYNAMIC_RUNTIME_SECRET}' exec /app/pipeline_runner.sh"]
 EOF
 fi
 
-# Inject dynamic runtime flag into victim Dockerfile before building
-if [ -f "/assets/victim/Dockerfile" ]; then
-    sed -i "s|FLAG{DYNAMIC_RUNTIME_SECRET}|${DYNAMIC_FLAG1}|g" /assets/victim/Dockerfile
-    sed -i "s|FLAG{supply_chain_credential_leaked_proc_2026}|${DYNAMIC_FLAG1}|g" /assets/victim/Dockerfile
-fi
+# Inject dynamic runtime flag into victim Dockerfile before building (across all search paths)
+for df in \
+    "/assets/victim/Dockerfile" \
+    "/root/assets/victim/Dockerfile" \
+    "${SCRIPT_DIR}/victim/Dockerfile" \
+    "${SCRIPT_DIR}/assets/victim/Dockerfile"; do
+    if [ -f "${df}" ]; then
+        sed -i "s|\\\${DYNAMIC_FLAG1}|FLAG{proc_harvest_demo}|g" "${df}"
+        sed -i "s|\${DYNAMIC_FLAG1}|FLAG{proc_harvest_demo}|g" "${df}"
+        sed -i "s|FLAG{DYNAMIC_RUNTIME_SECRET}|FLAG{proc_harvest_demo}|g" "${df}"
+        sed -i "s|FLAG{supply_chain_credential_leaked_proc_2026}|FLAG{proc_harvest_demo}|g" "${df}"
+    fi
+done
 
 # Fallback: Generate docker-compose.yml if missing
 if [ ! -f "/assets/docker-compose.yml" ]; then
