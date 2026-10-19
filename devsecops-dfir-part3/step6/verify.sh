@@ -145,4 +145,6 @@ if [ -x "${SCORE_CLIENT}" ]; then
     bash "${SCORE_CLIENT}" complete 6 125
 elif [ -x "/usr/local/bin/score" ]; then
     /usr/local/bin/score complete 6 125
+elif [ -f "/assets/scoring/score_client.sh" ]; then
+    bash /assets/scoring/score_client.sh complete 6 125
 fi
