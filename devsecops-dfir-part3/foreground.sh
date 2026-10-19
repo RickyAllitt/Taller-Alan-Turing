@@ -88,6 +88,35 @@ if [ ! -x "/usr/local/bin/hint" ]; then
     cp /usr/local/bin/hint /assets/scoring/hint.sh 2>/dev/null || true
 fi
 
+# Link verification scripts into workspace directories for direct local access
+for i in 5 6; do
+    if [ -f "/step${i}/verify.sh" ]; then
+        mkdir -p "/root/filesystem/step${i}" "/root/step${i}" 2>/dev/null || true
+        ln -sfn "/step${i}/verify.sh" "/root/filesystem/step${i}/verify.sh" 2>/dev/null || true
+        ln -sfn "/step${i}/verify.sh" "/root/step${i}/verify.sh" 2>/dev/null || true
+    fi
+done
+
+# Ensure verify CLI command is available in PATH
+if [ ! -x "/usr/local/bin/verify" ]; then
+    cat << 'EOF' > /usr/local/bin/verify
+#!/bin/bash
+step="${1:-}"
+if [ -z "${step}" ]; then
+    echo "Uso: verify <numero_reto>"
+    echo "Ejemplo: verify 5"
+    exit 1
+fi
+if [ -f "/step${step}/verify.sh" ]; then
+    exec "/step${step}/verify.sh"
+else
+    echo "Error: No se encontró script de validación en /step${step}/verify.sh"
+    exit 1
+fi
+EOF
+    chmod 755 /usr/local/bin/verify
+fi
+
 # Operative Registration for Live Leaderboard & Points System
 if [ ! -f "/tmp/session_state.json" ]; then
     DEFAULT_ALIAS="operative-$RANDOM"

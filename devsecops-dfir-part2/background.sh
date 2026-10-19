@@ -185,16 +185,36 @@ chmod 755 /tmp/backdoor_implant_src.sh
 # Symlink /root/assets and /assets for consistent resolution
 ln -sfn /assets /root/assets 2>/dev/null || true
 
-# Synchronize verification scripts for Challenge 3 and Challenge 4
+# Synchronize verification scripts for Challenge 3 and Challenge 4 and workspace
 for i in 3 4; do
-    mkdir -p "/step${i}"
+    mkdir -p "/step${i}" "/root/filesystem/step${i}" "/root/step${i}"
     if [ -f "${SCRIPT_DIR}/step${i}/verify.sh" ]; then
         cp "${SCRIPT_DIR}/step${i}/verify.sh" "/step${i}/verify.sh"
     elif [ -f "/assets/step${i}/verify.sh" ]; then
         cp "/assets/step${i}/verify.sh" "/step${i}/verify.sh"
     fi
     chmod +x "/step${i}/verify.sh" 2>/dev/null || true
+    ln -sfn "/step${i}/verify.sh" "/root/filesystem/step${i}/verify.sh" 2>/dev/null || true
+    ln -sfn "/step${i}/verify.sh" "/root/step${i}/verify.sh" 2>/dev/null || true
 done
+
+# Create global verify command in PATH
+cat << 'EOF' > /usr/local/bin/verify
+#!/bin/bash
+step="${1:-}"
+if [ -z "${step}" ]; then
+    echo "Uso: verify <numero_reto>"
+    echo "Ejemplo: verify 3"
+    exit 1
+fi
+if [ -f "/step${step}/verify.sh" ]; then
+    exec "/step${step}/verify.sh"
+else
+    echo "Error: No se encontró script de validación en /step${step}/verify.sh"
+    exit 1
+fi
+EOF
+chmod 755 /usr/local/bin/verify
 
 # Install scoring and tactical hint utilities into system PATH
 mkdir -p /assets/scoring /usr/local/bin

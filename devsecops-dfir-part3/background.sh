@@ -128,15 +128,33 @@ docker push localhost:5000/victim-service:v1.0
 docker pull alpine:3.20 >/dev/null 2>&1 || true
 
 # 7. Setup scoring engine and verification scripts
-if [ -f "${SCRIPT_DIR}/step5/verify.sh" ]; then
-    cp "${SCRIPT_DIR}/step5/verify.sh" /step5/verify.sh
-fi
-chmod 755 /step5/verify.sh 2>/dev/null || true
+for i in 5 6; do
+    mkdir -p "/step${i}" "/root/filesystem/step${i}" "/root/step${i}"
+    if [ -f "${SCRIPT_DIR}/step${i}/verify.sh" ]; then
+        cp "${SCRIPT_DIR}/step${i}/verify.sh" "/step${i}/verify.sh"
+    fi
+    chmod 755 "/step${i}/verify.sh" 2>/dev/null || true
+    ln -sfn "/step${i}/verify.sh" "/root/filesystem/step${i}/verify.sh" 2>/dev/null || true
+    ln -sfn "/step${i}/verify.sh" "/root/step${i}/verify.sh" 2>/dev/null || true
+done
 
-if [ -f "${SCRIPT_DIR}/step6/verify.sh" ]; then
-    cp "${SCRIPT_DIR}/step6/verify.sh" /step6/verify.sh
+# Create global verify command in PATH
+cat << 'EOF' > /usr/local/bin/verify
+#!/bin/bash
+step="${1:-}"
+if [ -z "${step}" ]; then
+    echo "Uso: verify <numero_reto>"
+    echo "Ejemplo: verify 5"
+    exit 1
 fi
-chmod 755 /step6/verify.sh 2>/dev/null || true
+if [ -f "/step${step}/verify.sh" ]; then
+    exec "/step${step}/verify.sh"
+else
+    echo "Error: No se encontró script de validación en /step${step}/verify.sh"
+    exit 1
+fi
+EOF
+chmod 755 /usr/local/bin/verify
 
 if [ -d "${SCRIPT_DIR}/assets/scoring" ]; then
     cp -ru "${SCRIPT_DIR}/assets/scoring/"* /assets/scoring/ 2>/dev/null || true
