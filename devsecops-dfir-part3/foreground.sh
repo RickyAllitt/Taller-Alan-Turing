@@ -41,6 +41,12 @@ while [ ! -f /tmp/killercoda_ready ]; do
     ELAPSED=$((ELAPSED + 1))
 done
 
+# Configure system timezone to Europe/Madrid (Spain local time)
+timedatectl set-timezone Europe/Madrid 2>/dev/null || ln -fs /usr/share/zoneinfo/Europe/Madrid /etc/localtime 2>/dev/null || true
+export TZ="Europe/Madrid"
+echo 'export TZ="Europe/Madrid"' >> /etc/profile.d/timezone.sh 2>/dev/null || true
+echo 'export TZ="Europe/Madrid"' >> /root/.bashrc 2>/dev/null || true
+
 # Ensure score and hint command binaries exist in system PATH
 mkdir -p /usr/local/bin /assets/scoring
 for candidate in \

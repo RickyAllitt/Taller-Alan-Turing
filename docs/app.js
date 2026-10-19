@@ -270,6 +270,85 @@ function renderMetrics(students) {
   renderFirstBlood(students);
 }
 
+// Parse timestamp to milliseconds for chronological comparison
+function parseTimestampMs(timeStr) {
+  if (!timeStr) return Infinity;
+  if (typeof timeStr === 'number') return timeStr;
+
+  const str = String(timeStr).trim();
+  const match = str.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)?$/i);
+  if (match) {
+    const [, y, m, day, h, min, s, meridiem] = match;
+    let hour = parseInt(h, 10);
+    if (meridiem) {
+      const meridianUpper = meridiem.toUpperCase();
+      if (meridianUpper === 'PM' && hour < 12) hour += 12;
+      if (meridianUpper === 'AM' && hour === 12) hour = 0;
+    }
+    return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10), hour, parseInt(min, 10), parseInt(s, 10)).getTime();
+  }
+
+  const parsed = Date.parse(str);
+  return isNaN(parsed) ? Infinity : parsed;
+}
+
+// Format time badge for First Blood showcase (HH:MM:SS AM/PM)
+function formatTimeBadge(timeStr) {
+  if (!timeStr) return '--:--';
+  const str = String(timeStr).trim();
+  const parts = str.split(/\s+/);
+  if (parts.length >= 3 && /^(AM|PM)$/i.test(parts[2])) {
+    return `${parts[1]} ${parts[2].toUpperCase()}`;
+  }
+  const ms = parseTimestampMs(str);
+  if (ms !== Infinity) {
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Madrid',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(new Date(ms));
+    } catch {
+      return parts[1] || str;
+    }
+  }
+  return str;
+}
+
+// Format full date-time string for table display in Spanish local time
+function formatDisplayDateTime(timeStr) {
+  if (!timeStr || timeStr === 'Unknown') return timeStr || 'Unknown';
+  const str = String(timeStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}:\d{2}\s*(AM|PM)?$/i.test(str)) {
+    return str;
+  }
+  const ms = parseTimestampMs(str);
+  if (ms !== Infinity) {
+    try {
+      const d = new Date(ms);
+      const datePart = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Europe/Madrid',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(d);
+      const timePart = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Madrid',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(d);
+      return `${datePart} ${timePart}`;
+    } catch {
+      return str;
+    }
+  }
+  return str;
+}
+
 // Determine earliest solvers per step
 function renderFirstBlood(students) {
   const steps = [
@@ -286,13 +365,16 @@ function renderFirstBlood(students) {
   steps.forEach(step => {
     let earliest = null;
     let earliestTime = null;
+    let earliestMs = Infinity;
 
     students.forEach(s => {
       const ch = s.challenges[step.key];
       if (ch && ch.completed && ch.completedAt) {
-        if (!earliestTime || ch.completedAt < earliestTime) {
+        const ms = parseTimestampMs(ch.completedAt);
+        if (ms < earliestMs) {
           earliest = s.alias;
           earliestTime = ch.completedAt;
+          earliestMs = ms;
         }
       }
     });
@@ -304,7 +386,7 @@ function renderFirstBlood(students) {
         <span class="fb-task-name">${step.name}</span>
         <span class="fb-agent-name">${earliest || 'Awaiting Solution...'}</span>
       </div>
-      <div class="fb-time-badge">${earliestTime ? earliestTime.split(' ')[1] + ' ' + (earliestTime.split(' ')[2] || '') : '--:--'}</div>
+      <div class="fb-time-badge">${formatTimeBadge(earliestTime)}</div>
     `;
     elements.firstBloodGrid.appendChild(card);
   });
@@ -400,7 +482,7 @@ function renderDashboard() {
               ${escapeHtml(s.alias)}
               ${isElite ? `<span class="elite-badge" title="${eliteTitle}">★ ÉLITE</span>` : ''}
             </div>
-            <div class="operative-registered">Reg: ${escapeHtml(s.registeredAt)}</div>
+            <div class="operative-registered">Reg: ${escapeHtml(formatDisplayDateTime(s.registeredAt))}</div>
           </div>
         </div>
       </td>
@@ -429,7 +511,7 @@ function renderDashboard() {
         </span>
       </td>
       <td class="time-cell">
-        ${escapeHtml(lastTime)}
+        ${escapeHtml(formatDisplayDateTime(lastTime))}
       </td>
       <td>
         <span class="status-tag ${isElite || baseCount >= 4 ? 'completed' : 'in-progress'}" style="${isElite ? 'background: rgba(168, 85, 247, 0.2); border-color: #a855f7; color: #facc15;' : ''}">

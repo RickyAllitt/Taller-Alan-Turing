@@ -53,11 +53,12 @@ Copia o edita `/assets/docker-compose.yml` hacia `/assets/docker-compose.hardene
 - Asegura la sintaxis YAML respetando la indentación de 2 espacios.
 
 ### 2. Despliegue del Contenedor Securizado
-Aplica el manifiesto bastionado utilizando `docker-compose` (o `docker compose`) forzando la sustitución del contenedor anterior:
+Aplica el manifiesto bastionado sustituyendo el contenedor anterior de forma limpia:
 
 ```bash
-docker-compose -f /assets/docker-compose.hardened.yml up -d --force-recreate
-# (o 'docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate')
+docker rm -f cicd_runner_pipeline 2>/dev/null || true
+docker-compose -f /assets/docker-compose.hardened.yml up -d
+# (o 'docker compose -f /assets/docker-compose.hardened.yml up -d')
 ```
 
 Verifica con `docker ps` que `cicd_runner_pipeline` se encuentra en estado *Up* y en ejecución continua.

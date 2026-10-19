@@ -7,6 +7,10 @@
 exec > /var/log/killercoda_background.log 2>&1
 set -x
 
+# Configure system timezone to Europe/Madrid (Spain local time)
+timedatectl set-timezone Europe/Madrid 2>/dev/null || ln -fs /usr/share/zoneinfo/Europe/Madrid /etc/localtime 2>/dev/null || true
+export TZ="Europe/Madrid"
+
 # Remove any stale markers
 rm -f /tmp/killercoda_ready /tmp/killercoda_failed
 
@@ -53,6 +57,15 @@ EOF
     chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
     cp -f /usr/local/lib/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose 2>/dev/null || true
 fi
+
+# Fix Docker 26+ compatibility bug in legacy docker-compose v1 (KeyError: 'ContainerConfig')
+for py_service in \
+    "/usr/lib/python3/dist-packages/compose/service.py" \
+    "/usr/local/lib/python3.*/dist-packages/compose/service.py"; do
+    if [ -f "${py_service}" ]; then
+        sed -i "s/container.image_config\['ContainerConfig'\]/(container.image_config.get('ContainerConfig') or container.image_config.get('Config') or {})/g" "${py_service}" 2>/dev/null || true
+    fi
+done
 
 # 2. Update package repositories and install required tools non-interactively
 echo "[APT] Installing YARA and jq..."

@@ -7,6 +7,10 @@
 exec > /var/log/killercoda_background.log 2>&1
 set -x
 
+# Configure system timezone to Europe/Madrid (Spain local time)
+timedatectl set-timezone Europe/Madrid 2>/dev/null || ln -fs /usr/share/zoneinfo/Europe/Madrid /etc/localtime 2>/dev/null || true
+export TZ="Europe/Madrid"
+
 # Remove any stale markers and residual flags
 rm -f /tmp/killercoda_ready /tmp/killercoda_failed /root/host_flag.txt /root/.host_flag.txt /root/flag*.txt /tmp/flag*.txt 2>/dev/null || true
 

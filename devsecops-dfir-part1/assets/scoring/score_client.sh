@@ -18,15 +18,15 @@ FIREBASE_DATABASE_URL="${FIREBASE_DATABASE_URL:-https://bootcamp-ac825-default-r
 WORKSHOP_ID="${WORKSHOP_ID:-alan-turing-2026}"
 LEADERBOARD_URL="${LEADERBOARD_URL:-https://rickyallitt.github.io/Taller-Alan-Turing}"
 
-# Ensure jq is installed
-if ! command -v jq >/dev/null 2>&1; then
+# Ensure jq and tzdata are installed
+if ! command -v jq >/dev/null 2>&1 || [ ! -f /usr/share/zoneinfo/Europe/Madrid ]; then
     export DEBIAN_FRONTEND=noninteractive
-    apt-get update -y >/dev/null 2>&1 && apt-get install -y --no-install-recommends jq >/dev/null 2>&1 || true
+    apt-get update -y >/dev/null 2>&1 && apt-get install -y --no-install-recommends jq tzdata >/dev/null 2>&1 || true
 fi
 
-# Generate timestamp in Spanish local time (CET, 12-hour AM/PM)
+# Generate timestamp in Spanish local time (Europe/Madrid CET/CEST, 12-hour AM/PM)
 get_spanish_timestamp() {
-    date '+%Y-%m-%d %I:%M:%S %p'
+    TZ="Europe/Madrid" date '+%Y-%m-%d %I:%M:%S %p'
 }
 
 # Compute SHA-256 hash of a string
