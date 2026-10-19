@@ -29,11 +29,6 @@ En este ejercicio operativo deberás realizar la reconstrucción ofensiva de la 
 |  Límite del Contenedor: cicd_runner_pipeline                              ║       |
 |                                                                           ║       |
 |    Socket Montado: /var/run/docker.sock <═════════════════════════════════╝       |
-|                                                                                   |
-|    Jerarquía de Procesos                                                          |
-|      PID 1: /app/pipeline_runner.sh                                               |
-|        └── Memoria Virtual: /proc/1/environ (Desafío 1)                           |
-|                                                                                   |
 |    Disposición de Almacenamiento OverlayFS                                        |
 |      UpperDir: Capa mutable dinámica copy-on-write (Desafío 3)                    |
 |      LowerDir: Capas inmutables de la imagen base                                 |
@@ -75,7 +70,7 @@ Si te encuentras bloqueado en cualquier desafío, puedes solicitar orientación 
 hint <numero_de_paso>
 ```
 
-Ejemplo: `hint 1` muestra los niveles de pistas disponibles y el coste en puntos antes de confirmar el desbloqueo. Desbloquear pistas deduce puntos de la puntuación base de ese desafío tras su verificación.
+Ejemplo: `hint 3` muestra los niveles de pistas disponibles y el coste en puntos antes de confirmar el desbloqueo. Desbloquear pistas deduce puntos de la puntuación base de ese desafío tras su verificación.
 
 ### Marcador en Vivo del Taller
 Sigue la clasificación en tiempo real, tiempos de entrega y avance de tus compañeros en:
@@ -95,4 +90,4 @@ Verifica el estado del contenedor de prácticas antes de comenzar:
 docker ps --filter "name=cicd_runner_pipeline" --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"
 ```
 
-Avanza al **Desafío 1** para comenzar la extracción de credenciales.
+Avanza al **Desafío 3** para comenzar el triaje forense digital.

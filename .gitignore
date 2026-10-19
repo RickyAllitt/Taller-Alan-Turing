@@ -15,3 +15,9 @@ Thumbs.db
 /tmp/flag*.txt
 /tmp/killercoda_ready
 *.log
+
+# Presentation and speaker scripts
+*.pdf
+*.pptx
+*Guion*
+*guion*

@@ -42,7 +42,21 @@ while [ ! -f /tmp/killercoda_ready ]; do
 done
 
 # Ensure score and hint command binaries exist in system PATH
-mkdir -p /usr/local/bin /assets/scoring
+mkdir -p /usr/local/bin /assets/scoring /usr/local/lib/docker/cli-plugins /usr/libexec/docker/cli-plugins
+
+# Ensure both 'docker compose' and 'docker-compose' work seamlessly
+if command -v docker-compose >/dev/null 2>&1 && ! docker compose version >/dev/null 2>&1; then
+    cat << 'EOF' > /usr/local/lib/docker/cli-plugins/docker-compose
+#!/bin/bash
+if [ "$1" = "docker-cli-plugin-metadata" ]; then
+    echo '{"SchemaVersion":"0.1.0","Vendor":"Docker","Version":"v2"}'
+    exit 0
+fi
+exec docker-compose "$@"
+EOF
+    chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+    cp -f /usr/local/lib/docker/cli-plugins/docker-compose /usr/libexec/docker/cli-plugins/docker-compose 2>/dev/null || true
+fi
 for candidate in \
     "/usr/local/bin/score_client.sh" \
     "/assets/scoring/score_client.sh" \

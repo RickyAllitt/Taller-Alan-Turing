@@ -17,7 +17,7 @@ NC='\033[0m'
 
 if [ ! -f "${FLAG_FILE}" ]; then
     echo -e "${RED}[FALLO] Archivo de flag no encontrado: ${FLAG_FILE}${NC}"
-    echo -e "${YELLOW}[PISTA] Desde dentro de cicd_runner_pipeline, aprovecha /var/run/docker.sock para ejecutar un contenedor que monte el sistema de ficheros del host (ej. 'docker run -v /:/mnt/host --rm alpine cat /mnt/host/root/.host_flag.txt') y guárdalo en /tmp/flag2.txt.${NC}"
+    echo -e "${YELLOW}[PISTA] Desde dentro de cicd_runner_pipeline, aprovecha /var/run/docker.sock para ejecutar un contenedor que monte el sistema de ficheros del host (ej. 'docker run -v /:/mnt/host --rm alpine ls -la /mnt/host/root') y guarda la flag recuperada en /tmp/flag2.txt.${NC}"
     exit 1
 fi
 

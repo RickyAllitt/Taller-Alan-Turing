@@ -27,7 +27,8 @@ RUNNING=$(docker inspect -f '{{.State.Running}}' "${CONTAINER_NAME}" 2>/dev/null
 if [ "${RUNNING}" != "true" ]; then
     echo -e "${RED}[FALLO] El contenedor '${CONTAINER_NAME}' no está en ejecución.${NC}"
     echo -e "${YELLOW}[PISTA] Despliega tu archivo compose bastionado con:${NC}"
-    echo -e "       docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate"
+    echo -e "       docker-compose -f /assets/docker-compose.hardened.yml up -d --force-recreate"
+    echo -e "       (o 'docker compose -f /assets/docker-compose.hardened.yml up -d --force-recreate')${NC}"
     exit 1
 fi
 

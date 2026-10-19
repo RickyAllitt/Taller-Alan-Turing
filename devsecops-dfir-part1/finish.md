@@ -29,11 +29,11 @@ La siguiente fase del taller aborda la respuesta a incidentes (**DFIR**) y la se
 
 1. Abre el catálogo de escenarios de Killercoda e inicia:
    **"Parte 2: Container DFIR & Production Hardening"**
-2. En la nueva terminal de la Parte 2, registra el **MISMO indicativo o nombre** que usaste aquí:
+2. En la nueva terminal de la Parte 2, reanuda tu sesión con tu nombre y el PIN asignado:
    ```bash
-   score register <tu_mismo_nombre>
+   score resume <tu_nombre> <tu_pin>
    ```
-   *El sistema detectará automáticamente tu progreso y vinculará tus 450 puntos acumulados.*
+   *El sistema recuperará automáticamente tu progreso y vinculará tus 450 puntos acumulados.*
 3. Completa los dos desafíos defensivos restantes para alcanzar los **1.000 Puntos Máximos** en el marcador en vivo.
 
 Consulta el marcador en vivo de la clase:

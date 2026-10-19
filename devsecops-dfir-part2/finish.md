@@ -58,6 +58,18 @@ Para profundizar en las especificaciones de seguridad y arquitecturas de referen
 ## Finalización del Cyber Range y Marcador de la Promoción
 
 Los resultados finales y la telemetría de tus ejercicios han quedado registrados en el sistema de evaluación centralizado.
-- Puntuación Máxima Posible: 1.000 Puntos Base.
+- Puntuación Máxima de la Fase Troncal: **1.000 Puntos Base**.
 - Puedes consultar la clasificación final, las marcas de tiempo y el progreso de tus compañeros en el marcador en vivo:
   **https://rickyallitt.github.io/Taller-Alan-Turing**
+
+---
+
+## ¿Has terminado antes de tiempo? ¡Desafío Bonus Track!
+
+Si has completado la Parte 2 y aún te queda tiempo de sesión, o si deseas seguir profundizando de forma autónoma en casa:
+1. Inicia el escenario: **"Parte 3: Bonus Track (Shift-Left DevSecOps & Supply Chain Trust)"**.
+2. En la terminal, reanuda tu sesión con:
+   ```bash
+   score resume <tu_nombre> <tu_pin>
+   ```
+3. Completa los **Desafíos 5 y 6** (auditoría estática con Trivy, firma criptográfica con Cosign y puerta de admisión Zero Trust) para sumar **+250 puntos adicionales** (hasta 1.250 pts) y obtener la distinción de **Operativo Élite** en el Leaderboard.

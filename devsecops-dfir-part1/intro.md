@@ -19,10 +19,8 @@ En este ejercicio operativo deberás realizar la reconstrucción ofensiva de la 
 +-----------------------------------------------------------------------------------+
 | Sistema Host (Ubuntu 22.04 LTS / Entorno Host)                                    |
 |                                                                                   |
-|  Artefactos en el Sistema de Ficheros                                             |
-|    /root/.host_flag.txt              Objetivo de integridad de root (Desafío 2)   |
-|    /evidence/backdoor_implant.sh     Artefacto malicioso recuperado (Desafío 3)   |
-|    /assets/docker-compose.yml        Manifiesto vulnerable original (Desafío 4)   |
+|  Estructura del Sistema de Ficheros en el Host                                    |
+|    /root/                            Directorio restringido del host (Desafío 2)  |
 |                                                                                   |
 |  Demonio Docker (dockerd)                                                         |
 |    UNIX Domain Socket: /var/run/docker.sock <═════════════════════════════╗       |
@@ -34,10 +32,6 @@ En este ejercicio operativo deberás realizar la reconstrucción ofensiva de la 
 |    Jerarquía de Procesos                                                          |
 |      PID 1: /app/pipeline_runner.sh                                               |
 |        └── Memoria Virtual: /proc/1/environ (Desafío 1)                           |
-|                                                                                   |
-|    Disposición de Almacenamiento OverlayFS                                        |
-|      UpperDir: Capa mutable dinámica copy-on-write (Desafío 3)                    |
-|      LowerDir: Capas inmutables de la imagen base                                 |
 +-----------------------------------------------------------------------------------+
 ```
 
